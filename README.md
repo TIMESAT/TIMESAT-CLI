@@ -119,3 +119,7 @@ This repository consists of two parts, each under different terms:
 
 Acknowledgement: Swedish National Space Agency, European Environment Agency, European Space Agency, VITO remote sensing, DHI remote sensing, Cloudflight, Geoville.
 
+Test 
+```bash
+uv sync --refresh-package timesatimage
+```
