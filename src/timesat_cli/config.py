@@ -35,6 +35,7 @@ class Settings:
     p_a: List[List[float]]
     p_st_timestep: int
     p_nodata: float
+    p_davailwin: int
     p_outlier: int
     p_printflag: int
     max_memory_gb: float
@@ -99,6 +100,7 @@ def load_config(jsfile: str) -> Config:
         p_a=s["p_a"]["value"],
         p_st_timestep=int(s["p_st_timestep"]["value"]),
         p_nodata=float(s["p_nodata"]["value"]),
+        p_davailwin=int(s["p_davailwin"]["value"]),
         p_outlier=int(s["p_outlier"]["value"]),
         p_printflag=int(s["p_printflag"]["value"]),
         max_memory_gb=float(s["max_memory_gb"]["value"]),
@@ -112,3 +114,47 @@ def load_config(jsfile: str) -> Config:
     )
 
     return Config(settings=settings)
+
+
+def build_param_array(
+    s,
+    attr: str,
+    dtype,
+    size: int = 255,
+    shape: Tuple[int, ...] | None = None,
+    fortran_2d: bool = False
+):
+    """
+    Build a parameter array for TIMESAT class settings.
+
+    Parameters
+    ----------
+    s : object
+        Settings container with `classes` iterable.
+    attr : str
+        Attribute on each class object in `s.classes` (e.g., 'p_smooth').
+    dtype : numpy dtype or dtype string (e.g., 'uint8', 'double').
+    size : int
+        Length of the first dimension (TIMESAT expects 255).
+    shape : tuple[int, ...] | None
+        Extra trailing shape for per-class vectors (e.g., (2,) for p_startcutoff).
+    fortran_2d : bool
+        If True and `shape==(2,)`, allocate (size,2) with order='F' to mirror legacy layout.
+
+    Returns
+    -------
+    np.ndarray
+        Filled parameter array.
+    """
+    if shape is None:
+        arr = np.zeros(size, dtype=dtype)
+        for i, c in enumerate(s.classes):
+            arr[i] = getattr(c, attr)
+        return arr
+
+    full_shape = (size, *shape)
+    order = 'F' if fortran_2d and len(shape) == 1 and shape[0] > 1 else 'C'
+    arr = np.zeros(full_shape, dtype=dtype, order=order)
+    for i, c in enumerate(s.classes):
+        arr[i, ...] = getattr(c, attr)
+    return arr

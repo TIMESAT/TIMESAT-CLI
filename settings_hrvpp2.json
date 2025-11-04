@@ -1,23 +1,23 @@
 {
   "settings": {
     "tv_list": {
-      "value": "filelists/time_list.txt",
+      "value": "",
       "description": "Text file with one date per line. Each date must be either YYYYMMDD (e.g. 20210415) or YYYYDOY (e.g. 2021105). The number of dates must equal the number of image files."
     },
     "image_file_list": {
-      "value": "filelists/image_files.txt",
+      "value": "C:\\Users\\Zhanzhang.Cai\\Documents\\work\\extract_exsample_tile_out\\ndvi_list.txt",
       "description": "Text file listing full paths to all input raster images (one per line)."
     },
     "quality_file_list": {
-      "value": "filelists/qa_files.txt",
-      "description": "Optional: text file listing full paths to QA rasters (one per line, same length as images). Leave empty string \"\" if not used."
+      "value": "C:\\Users\\Zhanzhang.Cai\\Documents\\work\\extract_exsample_tile_out\\los_mask_list.txt",
+      "description": "Optional: text file listing full paths to QA rasters (one per line, same length as images). Leave empty string if not used."
     },
     "lc_file": {
-      "value": "landcover.tif",
-      "description": "Optional: land cover GeoTIFF to apply class-specific parameters. Values in the raster should match 'landuse' IDs defined under class blocks. Leave empty string \"\" if not used."
+      "value": "C:\\Users\\Zhanzhang.Cai\\Documents\\work\\extract_exsample_tile_out\\LC_31UFS_2021_V3_window.tif",
+      "description": "Optional: land cover GeoTIFF to apply class-specific parameters. Values in the raster should match 'landuse' IDs defined under class blocks. Leave empty string if not used."
     },
     "outputfolder": {
-      "value": "outputs/",
+      "value": "C:\\Users\\Zhanzhang.Cai\\Documents\\work\\test_output",
       "description": "Directory where TIMESAT results will be saved. Subfolders 'ST/' (smoothed time series) and 'VPP/' (phenology parameters) will be created inside."
     },
     "imwindow": {
@@ -34,11 +34,11 @@
       "description": "Day number to ignore in leap years (default: 366 to ignore Dec 31, offseason in the northern hemisphere)."
     },
     "p_ylu": {
-      "value": [0.00001, 2],
+      "value": [0.0, 2.0],
       "description": "Data range limits [min, max]. Values outside are clipped."
     },
     "p_a": {
-      "value": [],
+      "value": [[0, 1], [1, 0], [2, 0], [3, 0.5], [4, 0], [5, 0]],
       "description": "QA weighting rules. Leave empty [] to keep original QA values. Use [qa_value, weight] for exact matches or [min, max, weight] for ranges."
     },
     "p_st_timestep": {
@@ -62,15 +62,15 @@
       "description": "Verbose print flag for TIMESAT internal processing. 0 = silent, 1 = detailed logging."
     },
     "max_memory_gb": {
-      "value": 10,
+      "value": 5,
       "description": "Maximum memory (GB) the program should use. Determines block size."
     },
     "para_check": {
-      "value": 1,
+      "value": 15,
       "description": "Number of CPU cores to use. If >1, Ray parallel processing is enabled."
     },
     "ray_dir": {
-      "value": "/tmp/ray",
+      "value": "",
       "description": "Temporary directory for Ray (only used if para_check > 1). Must be writable."
     },
     "scale": {
@@ -94,6 +94,53 @@
   "class1": {
     "landuse": {
       "value": 1,
+      "description": "Land cover ID for this class (must match values in lc_file)."
+    },
+    "p_fitmethod": {
+      "value": 1,
+      "description": "Fitting method: 1 = double logistic, 2 = smoothing spline."
+    },
+    "p_smooth": {
+      "value": 1000,
+      "description": "Smoothing parameter for spline. Larger = smoother curves."
+    },
+    "p_nenvi": {
+      "value": 1,
+      "description": "Number of upper envelope iterations (1 = none, 2 = one iteration)."
+    },
+    "p_wfactnum": {
+      "value": 1,
+      "description": "Adaptation strength factor for fitting."
+    },
+    "p_startmethod": {
+      "value": 1,
+      "description": "Season start detection method (e.g. 1 = amplitude method)."
+    },
+    "p_startcutoff": {
+      "value": [0.25, 0.15],
+      "description": "Cutoff thresholds for season start detection."
+    },
+    "p_low_percentile": {
+      "value": 0.05,
+      "description": "Percentile threshold for baseline level definition."
+    },
+    "p_fillbase": {
+      "value": 1,
+      "description": "Fill gaps with baseline flag. 0 = off, 1 = on."
+    },
+    "p_seasonmethod": {
+      "value": 1,
+      "description": "Season detection method: 1 = spline-based, 2 = sinusoidal."
+    },
+    "p_seapar": {
+      "value": 1,
+      "description": "Season detection parameter. 1 = single season/year, 2 = allow multiple seasons."
+    }
+  },
+
+  "class2": {
+    "landuse": {
+      "value": 2,
       "description": "Land cover ID for this class (must match values in lc_file)."
     },
     "p_fitmethod": {
@@ -121,11 +168,11 @@
       "description": "Cutoff thresholds for season start detection."
     },
     "p_low_percentile": {
-      "value": 0.0,
+      "value": 0.05,
       "description": "Percentile threshold for baseline level definition."
     },
     "p_fillbase": {
-      "value": 0,
+      "value": 1,
       "description": "Fill gaps with baseline flag. 0 = off, 1 = on."
     },
     "p_seasonmethod": {
@@ -133,55 +180,8 @@
       "description": "Season detection method: 1 = spline-based, 2 = sinusoidal."
     },
     "p_seapar": {
-      "value": 1,
-      "description": "Season detection parameter. 1 = single season/year, 2 = allow multiple seasons."
-    }
-  },
-
-  "class2": {
-    "landuse": {
-      "value": 2,
-      "description": "Land cover ID for second class."
-    },
-    "p_fitmethod": {
-      "value": 1,
-      "description": "Example: double logistic fitting for this class."
-    },
-    "p_smooth": {
-      "value": 0,
-      "description": "Unused for logistic method; keep 0."
-    },
-    "p_nenvi": {
-      "value": 2,
-      "description": "One upper envelope iteration."
-    },
-    "p_wfactnum": {
       "value": 0.5,
-      "description": "Weaker adaptation factor."
-    },
-    "p_startmethod": {
-      "value": 1,
-      "description": "Amplitude method again."
-    },
-    "p_startcutoff": {
-      "value": [0.3, 0.2],
-      "description": "Different thresholds for this class."
-    },
-    "p_low_percentile": {
-      "value": 5.0,
-      "description": "Use 5th percentile for baseline definition."
-    },
-    "p_fillbase": {
-      "value": 1,
-      "description": "Enable baseline filling for this class."
-    },
-    "p_seasonmethod": {
-      "value": 2,
-      "description": "Sinusoidal season detection."
-    },
-    "p_seapar": {
-      "value": 2,
-      "description": "Allow multiple seasons per year."
+      "description": "Season detection parameter. 1 = single season/year, 2 = allow multiple seasons."
     }
   }
 }
