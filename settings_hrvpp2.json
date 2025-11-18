@@ -88,6 +88,10 @@
     "p_nclasses": {
       "value": 1,
       "description": "Number of land cover classes defined below (class1, class2, ...)."
+    },
+    "outputvariables": {
+      "value": 1,
+      "description": "Output vpp switch. 1 = on (both ST and VPP), 0 = off (only ST)."
     }
   },
 
