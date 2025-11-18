@@ -34,7 +34,7 @@
       "description": "Day number to ignore in leap years (default: 366 to ignore Dec 31, offseason in the northern hemisphere)."
     },
     "p_ylu": {
-      "value": [0.0, 2.0],
+      "value": [0.0, 1.0],
       "description": "Data range limits [min, max]. Values outside are clipped."
     },
     "p_a": {
