@@ -46,6 +46,7 @@ class Settings:
     p_hrvppformat: int
     p_nclasses: int
     classes: List[ClassParams]
+    outputvariables: int
 
 
 @dataclass
@@ -111,6 +112,7 @@ def load_config(jsfile: str) -> Config:
         p_hrvppformat=int(s["p_hrvppformat"]["value"]),
         p_nclasses=nclasses,
         classes=classes,
+        outputvariables=outputvariables,
     )
 
     return Config(settings=settings)

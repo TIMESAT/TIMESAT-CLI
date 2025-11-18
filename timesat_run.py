@@ -124,14 +124,15 @@ def run(image_file_list: str, quality_file_list: str, lc_file: str, jsfile: str)
 
             @ray.remote
             def runtimesat(vi_temp, qa_temp, lc_temp):
-                vpp_para, vppqa, nseason_para, yfit_para, yfitqa, seasonfit, tseq = timesat.tsf2py(
+                vpp_para, vppqa, nseason_para, yfit_para, yfitqa, seasonfit, tseq = timesat.tsfprocess(
                     yr, vi_temp, qa_temp, timevector, lc_temp, s.p_nclasses,landuse_arr, p_outindex,
                     s.p_ignoreday, s.p_ylu, s.p_printflag, p_fitmethod_arr, p_smooth_arr,
                     s.p_nodata, s.p_davailwin, s.p_outlier,
                     p_nenvi_arr, p_wfactnum_arr, p_startmethod_arr, p_startcutoff_arr,
                     p_low_percentile_arr, p_fillbase_arr, s.p_hrvppformat,
                     p_seasonmethod_arr, p_seapar_arr,
-                    1, x, len(flist), p_outindex_num
+                    1, x, len(flist), p_outindex_num,
+                    s.outputvariables
                 )
                 vpp_para = vpp_para[0, :, :]
                 yfit_para = yfit_para[0, :, :]
@@ -150,14 +151,15 @@ def run(image_file_list: str, quality_file_list: str, lc_file: str, jsfile: str)
             yfit = np.stack([r[1] for r in results], axis=0)
             nseason = np.stack([r[2] for r in results], axis=0)
         else:
-            vpp, vppqa, nseason, yfit, yfitqa, seasonfit, tseq = timesat.tsf2py(
+            vpp, vppqa, nseason, yfit, yfitqa, seasonfit, tseq = timesat.tsfprocess(
                 yr, vi, qa, timevector, lc, s.p_nclasses, landuse_arr, p_outindex,
                 s.p_ignoreday, s.p_ylu, s.p_printflag, p_fitmethod_arr, p_smooth_arr,
                 s.p_nodata, s.p_davailwin, s.p_outlier,
                 p_nenvi_arr, p_wfactnum_arr, p_startmethod_arr, p_startcutoff_arr,
                 p_low_percentile_arr, p_fillbase_arr, s.p_hrvppformat,
                 p_seasonmethod_arr, p_seapar_arr,
-                y, x, len(flist), p_outindex_num)
+                y, x, len(flist), p_outindex_num,
+                s.outputvariables)
 
         vpp  = np.moveaxis(vpp, -1, 0)
         if s.scale == 0 and s.offset == 0:
@@ -167,7 +169,10 @@ def run(image_file_list: str, quality_file_list: str, lc_file: str, jsfile: str)
 
         print('--- start writing geotif ---  starttime: ' + str(datetime.datetime.now()))
         window = (x_map, y_map, x, y)
-        write_vpp_layers(outvppfn, vpp, window, img_profile_vpp)
+        
+        if s.outputvariables == 1:
+            write_vpp_layers(outvppfn, vpp, window, img_profile_vpp)
+
         write_st_layers(outyfitfn, yfit, window, img_profile_st)
 
         print(f'Block: {iblock + 1}/{num_block}  finishedtime: {datetime.datetime.now()}')
