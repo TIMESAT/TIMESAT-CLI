@@ -101,11 +101,11 @@
       "description": "Land cover ID for this class (must match values in lc_file)."
     },
     "p_fitmethod": {
-      "value": 1,
+      "value": 2,
       "description": "Fitting method: 1 = double logistic, 2 = smoothing spline."
     },
     "p_smooth": {
-      "value": 1000,
+      "value": 250,
       "description": "Smoothing parameter for spline. Larger = smoother curves."
     },
     "p_nenvi": {
@@ -138,53 +138,6 @@
     },
     "p_seapar": {
       "value": 1,
-      "description": "Season detection parameter. 1 = single season/year, 2 = allow multiple seasons."
-    }
-  },
-
-  "class2": {
-    "landuse": {
-      "value": 2,
-      "description": "Land cover ID for this class (must match values in lc_file)."
-    },
-    "p_fitmethod": {
-      "value": 2,
-      "description": "Fitting method: 1 = double logistic, 2 = smoothing spline."
-    },
-    "p_smooth": {
-      "value": 1000,
-      "description": "Smoothing parameter for spline. Larger = smoother curves."
-    },
-    "p_nenvi": {
-      "value": 1,
-      "description": "Number of upper envelope iterations (1 = none, 2 = one iteration)."
-    },
-    "p_wfactnum": {
-      "value": 1,
-      "description": "Adaptation strength factor for fitting."
-    },
-    "p_startmethod": {
-      "value": 1,
-      "description": "Season start detection method (e.g. 1 = amplitude method)."
-    },
-    "p_startcutoff": {
-      "value": [0.25, 0.15],
-      "description": "Cutoff thresholds for season start detection."
-    },
-    "p_low_percentile": {
-      "value": 0.05,
-      "description": "Percentile threshold for baseline level definition."
-    },
-    "p_fillbase": {
-      "value": 1,
-      "description": "Fill gaps with baseline flag. 0 = off, 1 = on."
-    },
-    "p_seasonmethod": {
-      "value": 1,
-      "description": "Season detection method: 1 = spline-based, 2 = sinusoidal."
-    },
-    "p_seapar": {
-      "value": 0.5,
       "description": "Season detection parameter. 1 = single season/year, 2 = allow multiple seasons."
     }
   }
