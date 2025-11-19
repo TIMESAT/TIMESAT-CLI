@@ -124,8 +124,7 @@ def run(jsfile: str) -> None:
                     s.p_nodata, s.p_davailwin, s.p_outlier,
                     p_nenvi_arr, p_wfactnum_arr, p_startmethod_arr, p_startcutoff_arr,
                     p_low_percentile_arr, p_fillbase_arr, s.p_hrvppformat,
-                    p_seasonmethod_arr, p_seapar_arr,
-                    1, x, len(flist), p_outindex_num
+                    p_seasonmethod_arr, p_seapar_arr, s.outputvariables
                 )
                 vpp_para = vpp_para[0, :, :]
                 yfit_para = yfit_para[0, :, :]
@@ -150,8 +149,7 @@ def run(jsfile: str) -> None:
                 s.p_nodata, s.p_davailwin, s.p_outlier,
                 p_nenvi_arr, p_wfactnum_arr, p_startmethod_arr, p_startcutoff_arr,
                 p_low_percentile_arr, p_fillbase_arr, s.p_hrvppformat,
-                p_seasonmethod_arr, p_seapar_arr,
-                y, x, len(flist), p_outindex_num)
+                p_seasonmethod_arr, p_seapar_arr, s.outputvariables)
 
         vpp  = np.moveaxis(vpp, -1, 0)
         if s.scale == 0 and s.offset == 0:
