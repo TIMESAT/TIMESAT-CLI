@@ -84,9 +84,10 @@ def run(image_file_list: str, quality_file_list: str, lc_file: str, jsfile: str)
         outyfitfn, outvppfn, outnsfn = _build_output_filenames(st_folder, vpp_folder, p_outindex, yrstart, yrend)
         img_profile_st, img_profile_vpp, img_profile_ns = prepare_profiles(img_profile, s.p_nodata, s.scale, s.offset)
         # pre-create files
-        for path in outvppfn:
-            with rasterio.open(path, 'w', **img_profile_vpp):
-                pass
+        if s.outputvariables == 1:
+            for path in outvppfn:
+                with rasterio.open(path, 'w', **img_profile_vpp):
+                    pass
         for path in outyfitfn:
             with rasterio.open(path, 'w', **img_profile_st):
                 pass
@@ -157,7 +158,6 @@ def run(image_file_list: str, quality_file_list: str, lc_file: str, jsfile: str)
                 p_low_percentile_arr, p_fillbase_arr, s.p_hrvppformat,
                 p_seasonmethod_arr, p_seapar_arr, s.outputvariables)
 
-        vpp  = np.moveaxis(vpp, -1, 0)
         if s.scale == 0 and s.offset == 0:
             yfit = np.moveaxis(yfit, -1, 0).astype(img_profile['dtype'])
         else:
@@ -167,6 +167,7 @@ def run(image_file_list: str, quality_file_list: str, lc_file: str, jsfile: str)
         window = (x_map, y_map, x, y)
         
         if s.outputvariables == 1:
+            vpp  = np.moveaxis(vpp, -1, 0)
             write_vpp_layers(outvppfn, vpp, window, img_profile_vpp)
 
         write_st_layers(outyfitfn, yfit, window, img_profile_st)
