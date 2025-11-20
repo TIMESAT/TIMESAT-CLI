@@ -77,20 +77,17 @@ def run(jsfile: str) -> None:
     else:
         dx, dy = int(s.imwindow[2]), int(s.imwindow[3])
 
-    imgprocessing = not (s.imwindow[2] + s.imwindow[3] == 2)
-
-    if imgprocessing:
-        st_folder, vpp_folder = create_output_folders(s.outputfolder)
-        outyfitfn, outvppfn, outnsfn = _build_output_filenames(st_folder, vpp_folder, p_outindex, yrstart, yrend)
-        img_profile_st, img_profile_vpp, img_profile_ns = prepare_profiles(img_profile, s.p_nodata, s.scale, s.offset)
-        # pre-create files
-        if s.outputvariables == 1:
-            for path in outvppfn:
-                with rasterio.open(path, 'w', **img_profile_vpp):
-                    pass
-        for path in outyfitfn:
-            with rasterio.open(path, 'w', **img_profile_st):
+    st_folder, vpp_folder = create_output_folders(s.outputfolder)
+    outyfitfn, outvppfn, outnsfn = _build_output_filenames(st_folder, vpp_folder, p_outindex, yrstart, yrend)
+    img_profile_st, img_profile_vpp, img_profile_ns = prepare_profiles(img_profile, s.p_nodata, s.scale, s.offset)
+    # pre-create files
+    if s.outputvariables == 1:
+        for path in outvppfn:
+            with rasterio.open(path, 'w', **img_profile_vpp):
                 pass
+    for path in outyfitfn:
+        with rasterio.open(path, 'w', **img_profile_st):
+            pass
 
     # compute memory blocks
     y_slice_size, num_block = memory_plan(dx, dy, z, p_outindex_num, yr, s.max_memory_gb)
