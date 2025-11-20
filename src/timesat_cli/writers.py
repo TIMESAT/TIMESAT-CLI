@@ -10,7 +10,7 @@ def prepare_profiles(img_profile, p_nodata: float, scale: float, offset: float):
     import copy
     img_profile_st = copy.deepcopy(img_profile)
     img_profile_st.update(compress='lzw')
-    if scale != 0 or offset != 0:
+    if scale != 1 or offset != 0:
         img_profile_st.update(dtype=rasterio.float32)
 
     img_profile_vpp = copy.deepcopy(img_profile)
