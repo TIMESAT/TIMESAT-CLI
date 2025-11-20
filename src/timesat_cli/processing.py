@@ -119,7 +119,7 @@ def run(jsfile: str) -> None:
 
             @ray.remote
             def runtimesat(vi_temp, qa_temp, lc_temp):
-                vpp_para, vppqa, nseason_para, yfit_para, yfitqa, seasonfit, tseq = timesat.tsf2py(
+                vpp_para, vppqa, nseason_para, yfit_para, yfitqa, seasonfit, tseq = timesat.tsfprocess(
                     yr, vi_temp, qa_temp, timevector, lc_temp, s.p_nclasses,landuse_arr, p_outindex,
                     s.p_ignoreday, s.p_ylu, s.p_printflag, p_fitmethod_arr, p_smooth_arr,
                     s.p_nodata, s.p_davailwin, s.p_outlier,
@@ -144,7 +144,7 @@ def run(jsfile: str) -> None:
             yfit = np.stack([r[1] for r in results], axis=0)
             nseason = np.stack([r[2] for r in results], axis=0)
         else:
-            vpp, vppqa, nseason, yfit, yfitqa, seasonfit, tseq = timesat.tsf2py(
+            vpp, vppqa, nseason, yfit, yfitqa, seasonfit, tseq = timesat.tsfprocess(
                 yr, vi, qa, timevector, lc, s.p_nclasses, landuse_arr, p_outindex,
                 s.p_ignoreday, s.p_ylu, s.p_printflag, p_fitmethod_arr, p_smooth_arr,
                 s.p_nodata, s.p_davailwin, s.p_outlier,
