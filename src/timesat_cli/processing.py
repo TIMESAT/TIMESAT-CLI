@@ -64,7 +64,7 @@ def date_with_ignored_day(yrstart: int, i_tv: int, p_ignoreday: int) -> datetime
     return jan1 + datetime.timedelta(days=real_ordinal - 1)
 
 
-def _build_output_filenames(st_folder: str, vpp_folder: str, p_outindex, yrstart: int, yrend: int):
+def _build_output_filenames(st_folder: str, vpp_folder: str, p_outindex, yrstart: int, yrend: int, p_ignoreday: int):
     outyfitfn = []
     for i_tv in p_outindex:
         yfitdate = date_with_ignored_day(yrstart, int(i_tv), p_ignoreday)
@@ -123,7 +123,7 @@ def run(jsfile: str) -> None:
         dx, dy = int(s.imwindow[2]), int(s.imwindow[3])
 
     st_folder, vpp_folder = create_output_folders(s.outputfolder)
-    outyfitfn, outvppfn, outnsfn = _build_output_filenames(st_folder, vpp_folder, p_outindex, yrstart, yrend)
+    outyfitfn, outvppfn, outnsfn = _build_output_filenames(st_folder, vpp_folder, p_outindex, yrstart, yrend, s.p_ignoreday)
     img_profile_st, img_profile_vpp, img_profile_ns = prepare_profiles(img_profile, s.p_nodata, s.scale, s.offset)
     # pre-create files
     if s.outputvariables == 1:
