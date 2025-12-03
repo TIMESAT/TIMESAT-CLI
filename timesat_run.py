@@ -63,10 +63,7 @@ def run(image_file_list: str, quality_file_list: str, lc_file: str, jsfile: str)
     print('Last  image: ' + os.path.basename(flist[-1]))
     print(yrstart)
 
-    p_outindex = np.arange(
-        (datetime.datetime(yrstart, 1, 1) - datetime.datetime(yrstart, 1, 1)).days + 1,
-        (datetime.datetime(yrstart + yr - 1, 12, 31) - datetime.datetime(yrstart, 1, 1)).days + 1
-    )[:: int(s.p_st_timestep)]
+    p_outindex = np.arange(1, yr * 365 + 1)[:: int(s.p_st_timestep)]
     p_outindex_num = len(p_outindex)
 
     with rasterio.open(flist[0], 'r') as temp:
