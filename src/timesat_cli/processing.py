@@ -4,6 +4,7 @@ from typing import List, Tuple
 
 import numpy as np
 import rasterio
+import calendar
 
 import timesat  # external dependency
 
@@ -16,10 +17,57 @@ from .parallel import maybe_init_ray
 VPP_NAMES = ["SOSD","SOSV","LSLOPE","EOSD","EOSV","RSLOPE","LENGTH",
              "MINV","MAXD","MAXV","AMPL","TPROD","SPROD"]
 
+
+def date_with_ignored_day(yrstart: int, i_tv: int, p_ignoreday: int) -> datetime.date:
+    """
+    Map a 1-based day index i_tv starting from yrstart into a real date,
+    treating every year as having 365 days by skipping p_ignoreday in leap years.
+
+    - i_tv: 1-based overall index (1 = first synthetic day of yrstart)
+    - p_ignoreday: day-of-year (1..366) in a leap year to skip
+        e.g. 366 -> skip Dec 31
+             1   -> skip Jan 1 (so first day becomes Jan 2)
+    """
+    # ---- Step 1: synthetic 365-day calendar ----
+    # convert overall index to year offset and day-of-year (1..365)
+    i = int(i_tv)
+    year_offset, doy_365 = divmod(i - 1, 365)
+    doy_365 += 1                        # back to 1-based
+    year = yrstart + year_offset
+
+    # ---- Step 2: map synthetic DOY to real calendar date, skipping p_ignoreday in leap years ----
+    jan1 = datetime.date(year, 1, 1)
+
+    if calendar.isleap(year):
+        if not (1 <= p_ignoreday <= 366):
+            raise ValueError("p_ignoreday must be in [1, 366] for leap years")
+
+        # Map synthetic day (1..365) to real ordinal (1..366)
+        if p_ignoreday == 1:
+            # Skip Jan 1: synthetic day 1 -> real ordinal 2 (Jan 2), etc.
+            real_ordinal = doy_365 + 1
+        elif p_ignoreday == 366:
+            # Skip Dec 31: synthetic ordinal matches real ordinal 1..365
+            real_ordinal = doy_365
+        else:
+            # General case: days before the skipped day are unchanged;
+            # days at or after the skipped day are shifted by +1.
+            if doy_365 < p_ignoreday:
+                real_ordinal = doy_365
+            else:
+                real_ordinal = doy_365 + 1
+    else:
+        # Non-leap year: simple 1:1 mapping
+        real_ordinal = doy_365
+
+    # Convert ordinal (1-based day-of-year) to date
+    return jan1 + datetime.timedelta(days=real_ordinal - 1)
+
+
 def _build_output_filenames(st_folder: str, vpp_folder: str, p_outindex, yrstart: int, yrend: int):
     outyfitfn = []
     for i_tv in p_outindex:
-        yfitdate = datetime.date(yrstart, 1, 1) + datetime.timedelta(days=int(i_tv)) - datetime.timedelta(days=1)
+        yfitdate = date_with_ignored_day(yrstart, int(i_tv), p_ignoreday)
         outyfitfn.append(os.path.join(st_folder, f"TIMESAT_{yfitdate.strftime('%Y%m%d')}.tif"))
 
     outvppfn = []
@@ -63,10 +111,7 @@ def run(jsfile: str) -> None:
     print('Last  image: ' + os.path.basename(flist[-1]))
     print(yrstart)
 
-    p_outindex = np.arange(
-        (datetime.datetime(yrstart, 1, 1) - datetime.datetime(yrstart, 1, 1)).days + 1,
-        (datetime.datetime(yrstart + yr - 1, 12, 31) - datetime.datetime(yrstart, 1, 1)).days + 1
-    )[:: int(s.p_st_timestep)]
+    p_outindex = np.arange(1, yr * 365 + 1)[:: int(s.p_st_timestep)]
     p_outindex_num = len(p_outindex)
 
     with rasterio.open(flist[0], 'r') as temp:
