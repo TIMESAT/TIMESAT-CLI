@@ -12,6 +12,7 @@ from timesat_cli.readers import read_file_lists, open_image_data
 from timesat_cli.fsutils import create_output_folders, memory_plan
 from timesat_cli.writers import prepare_profiles, write_vpp_layers, write_st_layers
 from timesat_cli.parallel import maybe_init_ray
+from timesat_cli.dateutils import date_with_ignored_day, build_monthly_sample_indices
 
 VPP_NAMES = ["SOSD","SOSV","LSLOPE","EOSD","EOSV","RSLOPE","LENGTH",
              "MINV","MAXD","MAXV","AMPL","TPROD","SPROD"]
@@ -19,7 +20,7 @@ VPP_NAMES = ["SOSD","SOSV","LSLOPE","EOSD","EOSV","RSLOPE","LENGTH",
 def _build_output_filenames(st_folder: str, vpp_folder: str, p_outindex, yrstart: int, yrend: int):
     outyfitfn = []
     for i_tv in p_outindex:
-        yfitdate = datetime.date(yrstart, 1, 1) + datetime.timedelta(days=int(i_tv)) - datetime.timedelta(days=1)
+        yfitdate = date_with_ignored_day(yrstart, int(i_tv), p_ignoreday)
         outyfitfn.append(os.path.join(st_folder, f"TIMESAT_{yfitdate.strftime('%Y%m%d')}.tif"))
 
     outvppfn = []
@@ -63,7 +64,9 @@ def run(image_file_list: str, quality_file_list: str, lc_file: str, jsfile: str)
     print('Last  image: ' + os.path.basename(flist[-1]))
     print(yrstart)
 
-    p_outindex = np.arange(1, yr * 365 + 1)[:: int(s.p_st_timestep)]
+    # p_outindex = np.arange(1, yr * 365 + 1)[:: int(s.p_st_timestep)]
+    p_outindex = build_monthly_sample_indices(yrstart, yr)
+
     p_outindex_num = len(p_outindex)
 
     with rasterio.open(flist[0], 'r') as temp:
