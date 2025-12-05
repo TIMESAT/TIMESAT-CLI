@@ -13,55 +13,10 @@ from .readers import read_file_lists, open_image_data
 from .fsutils import create_output_folders, memory_plan
 from .writers import prepare_profiles, write_vpp_layers, write_st_layers
 from .parallel import maybe_init_ray
+from .dateutils import date_with_ignored_day
 
 VPP_NAMES = ["SOSD","SOSV","LSLOPE","EOSD","EOSV","RSLOPE","LENGTH",
              "MINV","MAXD","MAXV","AMPL","TPROD","SPROD"]
-
-
-def date_with_ignored_day(yrstart: int, i_tv: int, p_ignoreday: int) -> datetime.date:
-    """
-    Map a 1-based day index i_tv starting from yrstart into a real date,
-    treating every year as having 365 days by skipping p_ignoreday in leap years.
-
-    - i_tv: 1-based overall index (1 = first synthetic day of yrstart)
-    - p_ignoreday: day-of-year (1..366) in a leap year to skip
-        e.g. 366 -> skip Dec 31
-             1   -> skip Jan 1 (so first day becomes Jan 2)
-    """
-    # ---- Step 1: synthetic 365-day calendar ----
-    # convert overall index to year offset and day-of-year (1..365)
-    i = int(i_tv)
-    year_offset, doy_365 = divmod(i - 1, 365)
-    doy_365 += 1                        # back to 1-based
-    year = yrstart + year_offset
-
-    # ---- Step 2: map synthetic DOY to real calendar date, skipping p_ignoreday in leap years ----
-    jan1 = datetime.date(year, 1, 1)
-
-    if calendar.isleap(year):
-        if not (1 <= p_ignoreday <= 366):
-            raise ValueError("p_ignoreday must be in [1, 366] for leap years")
-
-        # Map synthetic day (1..365) to real ordinal (1..366)
-        if p_ignoreday == 1:
-            # Skip Jan 1: synthetic day 1 -> real ordinal 2 (Jan 2), etc.
-            real_ordinal = doy_365 + 1
-        elif p_ignoreday == 366:
-            # Skip Dec 31: synthetic ordinal matches real ordinal 1..365
-            real_ordinal = doy_365
-        else:
-            # General case: days before the skipped day are unchanged;
-            # days at or after the skipped day are shifted by +1.
-            if doy_365 < p_ignoreday:
-                real_ordinal = doy_365
-            else:
-                real_ordinal = doy_365 + 1
-    else:
-        # Non-leap year: simple 1:1 mapping
-        real_ordinal = doy_365
-
-    # Convert ordinal (1-based day-of-year) to date
-    return jan1 + datetime.timedelta(days=real_ordinal - 1)
 
 
 def _build_output_filenames(st_folder: str, vpp_folder: str, p_outindex, yrstart: int, yrend: int, p_ignoreday: int):
