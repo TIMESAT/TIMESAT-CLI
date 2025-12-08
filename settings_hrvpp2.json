@@ -5,11 +5,11 @@
       "description": "Text file with one date per line. Each date must be either YYYYMMDD (e.g. 20210415) or YYYYDOY (e.g. 2021105). The number of dates must equal the number of image files."
     },
     "image_file_list": {
-      "value": "C:\\Users\\Zhanzhang.Cai\\Documents\\work\\extract_exsample_tile_out\\ndvi_list.txt",
+      "value": "C:\\Users\\Zhanzhang.Cai\\Documents\\work\\extract_exsample_tile_out\\ndvi_list.csv",
       "description": "Text file listing full paths to all input raster images (one per line)."
     },
     "quality_file_list": {
-      "value": "C:\\Users\\Zhanzhang.Cai\\Documents\\work\\extract_exsample_tile_out\\los_mask_list.txt",
+      "value": "C:\\Users\\Zhanzhang.Cai\\Documents\\work\\extract_exsample_tile_out\\los_mask_list.csv",
       "description": "Optional: text file listing full paths to QA rasters (one per line, same length as images). Leave empty string if not used."
     },
     "lc_file": {
@@ -17,11 +17,11 @@
       "description": "Optional: land cover GeoTIFF to apply class-specific parameters. Values in the raster should match 'landuse' IDs defined under class blocks. Leave empty string if not used."
     },
     "outputfolder": {
-      "value": "C:\\Users\\Zhanzhang.Cai\\Documents\\work\\test_output",
+      "value": "C:\\Users\\Zhanzhang.Cai\\Documents\\work\\Test",
       "description": "Directory where TIMESAT results will be saved. Subfolders 'ST/' (smoothed time series) and 'VPP/' (phenology parameters) will be created inside."
     },
     "imwindow": {
-      "value": [0, 0, 0, 0],
+      "value": [0, 0, 50, 50],
       "description": "Sub-window to process: [x_offset, y_offset, width, height]. Use [0,0,0,0] for the full image."
     },
 
@@ -42,7 +42,7 @@
       "description": "QA weighting rules. Leave empty [] to keep original QA values. Use [qa_value, weight] for exact matches or [min, max, weight] for ranges."
     },
     "p_st_timestep": {
-      "value": 1,
+      "value": -1,
       "description": "Output temporal resolution in days. Example: 1 = daily, 8 = 8-day composites."
     },
     "p_nodata": {
@@ -62,11 +62,11 @@
       "description": "Verbose print flag for TIMESAT internal processing. 0 = silent, 1 = detailed logging."
     },
     "max_memory_gb": {
-      "value": 5,
+      "value": 10,
       "description": "Maximum memory (GB) the program should use. Determines block size."
     },
     "para_check": {
-      "value": 15,
+      "value": 10,
       "description": "Number of CPU cores to use. If >1, Ray parallel processing is enabled."
     },
     "ray_dir": {
@@ -83,7 +83,7 @@
     },
     "p_hrvppformat": {
       "value": 1,
-      "description": "Output format. 1 = YYYYDOY (HRVPP convention). 0 = TIMESAT sequential numbering."
+      "description": "Output format. 1 = YYYYDOY. 0 = TIMESAT sequential numbering."
     },
     "p_nclasses": {
       "value": 1,

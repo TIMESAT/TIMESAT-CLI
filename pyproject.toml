@@ -29,11 +29,6 @@ dependencies = [
 [dependency-groups] 
 dev = ["pre-commit", "ruff", "matplotlib"]
 
-[project.optional-dependencies]
-parallel = [
-'ray',
-]
-
 [tool.hatch.version]
 source = "vcs"                                    # <-- tell Hatch to use Git tags
 

@@ -5,8 +5,6 @@ Utility functions for handling date operations in TIMESAT processing.
 from __future__ import annotations
 
 import datetime
-from typing import List
-
 import numpy as np
 
 __all__ = ["date_with_ignored_day", "build_monthly_sample_indices"]
@@ -74,7 +72,7 @@ def build_monthly_sample_indices(yrstart: int, yr: int) -> np.ndarray:
         A 1D array of indices into the synthetic timeline (1-based).
     """
 
-    indices: List[int] = []
+    indices: list[int] = []
     year_offset = 0  # offset of each synthetic year start (0, 365, 730, ...)
 
     for year in range(yrstart, yrstart + yr):

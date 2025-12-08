@@ -66,7 +66,7 @@
       "description": "Maximum memory (GB) the program should use. Determines block size."
     },
     "para_check": {
-      "value": 15,
+      "value": 1,
       "description": "Number of CPU cores to use. If >1, Ray parallel processing is enabled."
     },
     "ray_dir": {
@@ -83,7 +83,7 @@
     },
     "p_hrvppformat": {
       "value": 1,
-      "description": "Output format. 1 = YYYYDOY (HRVPP convention). 0 = TIMESAT sequential numbering."
+      "description": "Output format. 1 = YYYYDOY. 0 = TIMESAT sequential numbering."
     },
     "p_nclasses": {
       "value": 1,
