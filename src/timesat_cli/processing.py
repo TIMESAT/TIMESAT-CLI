@@ -3,7 +3,6 @@ import math, os, datetime
 
 import numpy as np
 import rasterio
-import calendar
 
 import timesat  # external dependency
 
