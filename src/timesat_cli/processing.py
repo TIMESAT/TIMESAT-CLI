@@ -186,6 +186,8 @@ def run(jsfile: str) -> None:
         yfitqa  = np.moveaxis(yfitqa, -1, 0)
         write_layers(stqa_datasets, yfitqa, window)
 
+        print(f'Block: {iblock + 1}/{num_block}  finishedtime: {datetime.datetime.now()}')
+
     close_all(
         data_datasets,
         qa_datasets,
@@ -201,4 +203,4 @@ def run(jsfile: str) -> None:
             ns_dataset,
         )
 
-    print(f'Block: {iblock + 1}/{num_block}  finishedtime: {datetime.datetime.now()}')
+    
