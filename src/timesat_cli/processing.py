@@ -1,40 +1,40 @@
 from __future__ import annotations
 import math, os, datetime
 
-from .config import load_config, build_param_array
-from .readers import read_file_lists, open_image_data
-from .fsutils import create_output_folders, memory_plan, close_all
-from .writers import prepare_profiles, write_layers
-from .dateutils import date_with_ignored_day, build_monthly_sample_indices
-
-VPP_NAMES = ["SOSD","SOSV","LSLOPE","EOSD","EOSV","RSLOPE","LENGTH",
-             "MINV","MAXD","MAXV","AMPL","TPROD","SPROD"]
-
-def _build_output_filenames(st_folder: str, vpp_folder: str, p_outindex, yrstart: int, yrend: int, p_ignoreday: int):
-    outyfitfn = []
-    outyfitqafn = []
-    for i_tv in p_outindex:
-        yfitdate = date_with_ignored_day(yrstart, int(i_tv), p_ignoreday)
-        outyfitfn.append(os.path.join(st_folder, f"TIMESAT_{yfitdate.strftime('%Y%m%d')}.tif"))
-        outyfitqafn.append(os.path.join(st_folder, f"TIMESAT_{yfitdate.strftime('%Y%m%d')}_QA.tif"))
-
-    outvppfn = []
-    outvppqafn = []
-    outnsfn = []
-    for i_yr in range(yrstart, yrend + 1):
-        for i_seas in range(2):
-            for name in VPP_NAMES:
-                outvppfn.append(os.path.join(vpp_folder, f"TIMESAT_{name}_{i_yr}_season_{i_seas+1}.tif"))
-            outvppqafn.append(os.path.join(vpp_folder, f"TIMESAT_QA_{i_yr}_season_{i_seas+1}.tif"))
-        outnsfn.append(os.path.join(vpp_folder, f"TIMESAT_{i_yr}_numseason.tif"))
-    return outyfitfn, outyfitqafn, outvppfn, outvppqafn, outnsfn
-
-
 def run(jsfile: str) -> None:
 
     import numpy as np
     import rasterio
     import timesat  # external dependency
+
+    from timesat_cli.config import load_config, build_param_array
+    from timesat_cli.readers import read_file_lists, open_image_data
+    from timesat_cli.fsutils import create_output_folders, memory_plan, close_all
+    from timesat_cli.writers import prepare_profiles, write_layers
+    from timesat_cli.dateutils import date_with_ignored_day, build_monthly_sample_indices
+
+    VPP_NAMES = ["SOSD","SOSV","LSLOPE","EOSD","EOSV","RSLOPE","LENGTH",
+                 "MINV","MAXD","MAXV","AMPL","TPROD","SPROD"]
+
+    def _build_output_filenames(st_folder: str, vpp_folder: str, p_outindex, yrstart: int, yrend: int, p_ignoreday: int):
+        outyfitfn = []
+        outyfitqafn = []
+        for i_tv in p_outindex:
+            yfitdate = date_with_ignored_day(yrstart, int(i_tv), p_ignoreday)
+            outyfitfn.append(os.path.join(st_folder, f"TIMESAT_{yfitdate.strftime('%Y%m%d')}.tif"))
+            outyfitqafn.append(os.path.join(st_folder, f"TIMESAT_{yfitdate.strftime('%Y%m%d')}_QA.tif"))
+
+        outvppfn = []
+        outvppqafn = []
+        outnsfn = []
+        for i_yr in range(yrstart, yrend + 1):
+            for i_seas in range(2):
+                for name in VPP_NAMES:
+                    outvppfn.append(os.path.join(vpp_folder, f"TIMESAT_{name}_{i_yr}_season_{i_seas+1}.tif"))
+                outvppqafn.append(os.path.join(vpp_folder, f"TIMESAT_QA_{i_yr}_season_{i_seas+1}.tif"))
+            outnsfn.append(os.path.join(vpp_folder, f"TIMESAT_{i_yr}_numseason.tif"))
+        return outyfitfn, outyfitqafn, outvppfn, outvppqafn, outnsfn
+
 
     print(jsfile)
     cfg = load_config(jsfile)
