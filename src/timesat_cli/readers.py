@@ -3,7 +3,6 @@ from __future__ import annotations
 import datetime
 import os
 import re
-from typing import List, Tuple
 
 import numpy as np
 import rasterio
@@ -11,15 +10,9 @@ from rasterio.windows import Window
 
 from .qa import assign_qa_weight
 
-try:
-    import ray
-except Exception:  # optional
-    ray = None
-
 __all__ = ["read_file_lists", "open_image_data"]
 
-
-def _parse_dates_from_name(name: str) -> Tuple[int, int, int]:
+def _parse_dates_from_name(name: str) -> tuple[int, int, int]:
     date_regex1 = r"\d{4}-\d{2}-\d{2}"
     date_regex2 = r"\d{4}\d{2}\d{2}"
     try:
@@ -41,7 +34,7 @@ def _parse_dates_from_name(name: str) -> Tuple[int, int, int]:
             raise ValueError(f"No date found in filename: {name}") from e
 
 
-def _read_time_vector(tlist: str, filepaths: List[str]):
+def _read_time_vector(tlist: str, filepaths: list[str]):
     """Return (timevector, yr, yrstart, yrend) in YYYYDOY format."""
     flist = [os.path.basename(p) for p in filepaths]
     timevector = np.ndarray(len(flist), order="F", dtype="uint32")
@@ -70,7 +63,7 @@ def _read_time_vector(tlist: str, filepaths: List[str]):
     return timevector, yr, yrstart, yrend
 
 
-def _unique_by_timevector(flist: List[str], qlist: List[str], timevector):
+def _unique_by_timevector(flist: list[str], qlist: list[str], timevector):
     tv_unique, indices = np.unique(timevector, return_index=True)
     flist2 = [flist[i] for i in indices]
     qlist2 = [qlist[i] for i in indices] if qlist else []
@@ -79,8 +72,8 @@ def _unique_by_timevector(flist: List[str], qlist: List[str], timevector):
 
 def read_file_lists(
     tlist: str, data_list: str, qa_list: str
-) -> Tuple[np.ndarray, List[str], List[str], int, int, int]:
-    qlist: List[str] | str = ""
+) -> tuple[np.ndarray, list[str], list[str], int, int, int]:
+    qlist: list[str] | str = ""
     with open(data_list, "r") as f:
         flist = f.read().splitlines()
     if qa_list != "":
@@ -100,105 +93,67 @@ def read_file_lists(
         yrend,
     )
 
-
 def open_image_data(
     x_map: int,
     y_map: int,
     x: int,
     y: int,
-    yflist: List[str],
-    wflist: List[str] | str,
-    lcfile: str,
+    data_datasets: list,
+    qa_datasets: list,
+    lc_dataset,
     data_type: str,
     p_a,
-    para_check: int,
     layer: int,
-    s3: dict | None = None,
 ):
-    """Read VI, QA, and LC blocks as arrays."""
-    z = len(yflist)
+    """
+    Read VI, QA, and LC blocks using already-open rasterio datasets.
+    This is fast because we do NOT call rasterio.open() for each block.
+    """
+
+    z = len(data_datasets)
+
+    # allocate arrays
     vi = np.ndarray((y, x, z), order="F", dtype=data_type)
     qa = np.ndarray((y, x, z), order="F", dtype=data_type)
-    lc = np.ndarray((y, x, z), order="F", dtype=np.uint8)
+    lc = np.ndarray((y, x), order="F", dtype=np.uint8)
 
-    # VI stack
-    if para_check > 1 and ray is not None:
-        vi_para = np.ndarray((y, x), order="F", dtype=data_type)
+    win = Window(x_map, y_map, x, y)
 
-        @ray.remote
-        def _readimgpara_(yfname, s3=s3):
-            if s3 is not None:
-                with rasterio.Env(**s3):
-                    with rasterio.open(yfname, "r") as temp:
-                        vi_para[:, :] = temp.read(
-                            layer, window=Window(x_map, y_map, x, y)
-                        )
-            else:
-                with rasterio.open(yfname, "r") as temp:
-                    vi_para[:, :] = temp.read(layer, window=Window(x_map, y_map, x, y))
-            return vi_para
+    # -----------------------------------------------------------
+    # 1) Read VI stack
+    # -----------------------------------------------------------
+    for i, ds in enumerate(data_datasets):
+        arr = ds.read(layer, window=win)
+        if arr.ndim == 3:
+            arr = arr[0, :, :]
+        vi[:, :, i] = arr
 
-        futures = [_readimgpara_.remote(i) for i in yflist]
-        vi = np.stack(ray.get(futures), axis=2)
+    # -----------------------------------------------------------
+    # 2) Read QA stack (or fill with ones)
+    # -----------------------------------------------------------
+    if len(qa_datasets) == 0:
+        qa[:] = 1
     else:
-        for i, yfname in enumerate(yflist):
-            if s3 is not None:
-                with rasterio.Env(**s3):
-                    with rasterio.open(yfname, "r") as temp:
-                        vi[:, :, i] = temp.read(
-                            layer, window=Window(x_map, y_map, x, y)
-                        )
-            else:
-                with rasterio.open(yfname, "r") as temp:
-                    vi[:, :, i] = temp.read(layer, window=Window(x_map, y_map, x, y))
+        for i, ds in enumerate(qa_datasets):
+            arr = ds.read(layer, window=win)
+            if arr.ndim == 3:
+                arr = arr[0, :, :]
+            qa[:, :, i] = arr
 
-    # QA stack
-    if wflist == "" or wflist == []:
-        qa = np.ones((y, x, z))
-    else:
-        if para_check > 1 and ray is not None:
-            qa_para = np.ndarray((y, x), order="F", dtype=data_type)
-
-            @ray.remote
-            def _readqapara_(wfname, s3=s3):
-                if s3 is not None:
-                    with rasterio.Env(**s3):
-                        with rasterio.open(wfname, "r") as temp:
-                            qa_para[:, :] = temp.read(
-                                layer, window=Window(x_map, y_map, x, y)
-                            )
-                else:
-                    with rasterio.open(wfname, "r") as temp:
-                        qa_para[:, :] = temp.read(
-                            layer, window=Window(x_map, y_map, x, y)
-                        )
-                return qa_para
-
-            futures = [_readqapara_.remote(i) for i in wflist]
-            qa = np.stack(ray.get(futures), axis=2)
-        else:
-            for i, wfname in enumerate(wflist):
-                if s3 is not None:
-                    with rasterio.Env(**s3):
-                        with rasterio.open(wfname, "r") as temp2:
-                            qa[:, :, i] = temp2.read(
-                                1, window=Window(x_map, y_map, x, y)
-                            )
-                else:
-                    with rasterio.open(wfname, "r") as temp2:
-                        qa[:, :, i] = temp2.read(1, window=Window(x_map, y_map, x, y))
+        # Weight QA
+        from .qa import assign_qa_weight
         qa = assign_qa_weight(p_a, qa)
 
-    # LC
-    if lcfile == "":
-        lc = np.ones((y, x))
+    # -----------------------------------------------------------
+    # 3) Land cover (single layer)
+    # -----------------------------------------------------------
+    if lc_dataset is None:
+        lc[:] = 1
     else:
-        if s3 is not None:
-            with rasterio.Env(**s3):
-                with rasterio.open(lcfile, "r") as temp3:
-                    lc = temp3.read(1, window=Window(x_map, y_map, x, y))
-        else:
-            with rasterio.open(lcfile, "r") as temp3:
-                lc = temp3.read(1, window=Window(x_map, y_map, x, y))
+        arr = lc_dataset.read(1, window=win)
+        if arr.ndim == 3:
+            arr = arr[0, :, :]
+        lc[:, :] = arr.astype(np.uint8)
 
     return vi, qa, lc
+

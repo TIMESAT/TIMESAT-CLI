@@ -1,35 +1,47 @@
 from __future__ import annotations
-from typing import List, Tuple
+
+import copy
+
+import numpy as np
 import rasterio
 from rasterio.windows import Window
 
-__all__ = ["prepare_profiles", "write_vpp_layers", "write_st_layers"]
+__all__ = ["prepare_profiles", "write_layers"]
 
 
 def prepare_profiles(img_profile, p_nodata: float, scale: float, offset: float):
-    import copy
     img_profile_st = copy.deepcopy(img_profile)
-    img_profile_st.update(compress='lzw')
+    img_profile_st.update(compress="lzw")
     if scale != 1 or offset != 0:
         img_profile_st.update(dtype=rasterio.float32)
 
     img_profile_vpp = copy.deepcopy(img_profile)
-    img_profile_vpp.update(nodata=p_nodata, dtype=rasterio.float32, compress='lzw')
+    img_profile_vpp.update(nodata=p_nodata, dtype=rasterio.float32, compress="lzw")
+
+    img_profile_qa = copy.deepcopy(img_profile)
+    img_profile_qa.update(nodata=0, dtype=rasterio.uint8, compress="lzw")
 
     img_profile_ns = copy.deepcopy(img_profile)
-    img_profile_ns.update(nodata=255, compress='lzw')
-    return img_profile_st, img_profile_vpp, img_profile_ns
+    img_profile_ns.update(nodata=255, dtype=rasterio.uint8, compress="lzw")
+
+    return img_profile_st, img_profile_vpp, img_profile_qa, img_profile_ns
 
 
-def write_vpp_layers(paths: List[str], arrays, window: Tuple[int, int, int, int], img_profile_vpp):
+def write_layers(
+    datasets: list[rasterio.io.DatasetWriter],
+    arrays: np.ndarray,
+    window: tuple[int, int, int, int],
+) -> None:
+    """
+    Write a block (window) for each array into the corresponding open dataset.
+
+    datasets : list of open rasterio DatasetWriter objects
+    arrays   : np.ndarray with shape (n_layers, y, x) or iterable of 2D arrays
+    window   : (x_map, y_map, x, y)
+    """
     x_map, y_map, x, y = window
-    for i, arr in enumerate(arrays, 1):
-        with rasterio.open(paths[i - 1], 'r+', **img_profile_vpp) as outvppfile:
-            outvppfile.write(arr, window=Window(x_map, y_map, x, y), indexes=1)
+    win = Window(x_map, y_map, x, y)
 
-
-def write_st_layers(paths: List[str], arrays, window: Tuple[int, int, int, int], img_profile_st):
-    x_map, y_map, x, y = window
     for i, arr in enumerate(arrays, 1):
-        with rasterio.open(paths[i - 1], 'r+', **img_profile_st) as outstfile:
-            outstfile.write(arr, window=Window(x_map, y_map, x, y), indexes=1)
+        dst = datasets[i - 1]
+        dst.write(arr, window=win, indexes=1)

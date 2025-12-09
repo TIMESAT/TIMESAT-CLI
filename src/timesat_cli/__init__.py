@@ -12,7 +12,7 @@ Email:
     zhanzhang.cai@nateko.lu.se
 """
 
-__version__ = "0.1.0"
+__version__ = "1.2.6"
 __all__ = ["run"]
 
 from .processing import run

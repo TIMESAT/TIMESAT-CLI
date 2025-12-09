@@ -23,16 +23,11 @@ dependencies = [
   "numpy",
   "rasterio",
   "pandas",
-  "timesat>=4.1.10",
+  "timesat>=4.1.11",
 ]
 
 [dependency-groups] 
 dev = ["pre-commit", "ruff", "matplotlib"]
-
-[project.optional-dependencies]
-parallel = [
-'ray',
-]
 
 [tool.hatch.version]
 source = "vcs"                                    # <-- tell Hatch to use Git tags

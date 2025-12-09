@@ -68,19 +68,6 @@ pip install timesat-cli
 
 ---
 
-## ⚙️ Optional: Parallel Processing Support
-
-`timesat-cli` provides an optional extra for **parallel execution** using [`ray`](https://www.ray.io/).
-
-To install with parallel-processing support:
-
-```bash
-pip install timesat-cli[parallel]
-```
-
-This installs the base package plus the ray dependency.
-
----
 
 ## Running the Application
 

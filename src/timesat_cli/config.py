@@ -39,8 +39,6 @@ class Settings:
     p_outlier: int
     p_printflag: int
     max_memory_gb: float
-    para_check: int
-    ray_dir: str
     scale: float
     offset: float
     p_hrvppformat: int
@@ -105,8 +103,6 @@ def load_config(jsfile: str) -> Config:
         p_outlier=int(s["p_outlier"]["value"]),
         p_printflag=int(s["p_printflag"]["value"]),
         max_memory_gb=float(s["max_memory_gb"]["value"]),
-        para_check=int(s["para_check"]["value"]),
-        ray_dir=s["ray_dir"]["value"],
         scale=float(s["scale"]["value"]),
         offset=float(s["offset"]["value"]),
         p_hrvppformat=int(s["p_hrvppformat"]["value"]),
