@@ -1,16 +1,11 @@
 from __future__ import annotations
 import math, os, datetime
 
-import numpy as np
-import rasterio
-
-import timesat  # external dependency
-
-from .config import load_config, build_param_array
-from .readers import read_file_lists, open_image_data
-from .fsutils import create_output_folders, memory_plan, close_all
-from .writers import prepare_profiles, write_layers
-from .dateutils import date_with_ignored_day, build_monthly_sample_indices
+from timesat_cli.config import load_config, build_param_array
+from timesat_cli.readers import read_file_lists, open_image_data
+from timesat_cli.fsutils import create_output_folders, memory_plan, close_all
+from timesat_cli.writers import prepare_profiles, write_layers
+from timesat_cli.dateutils import date_with_ignored_day, build_monthly_sample_indices
 
 VPP_NAMES = ["SOSD","SOSV","LSLOPE","EOSD","EOSV","RSLOPE","LENGTH",
              "MINV","MAXD","MAXV","AMPL","TPROD","SPROD"]
@@ -35,7 +30,12 @@ def _build_output_filenames(st_folder: str, vpp_folder: str, p_outindex, yrstart
     return outyfitfn, outyfitqafn, outvppfn, outvppqafn, outnsfn
 
 
-def run(image_file_list: str, quality_file_list: str, lc_file: str, jsfile: str) -> None:
+def run(jsfile: str) -> None:
+
+    import numpy as np
+    import rasterio
+    import timesat  # external dependency
+
     print(jsfile)
     cfg = load_config(jsfile)
     s = cfg.settings
@@ -58,7 +58,7 @@ def run(image_file_list: str, quality_file_list: str, lc_file: str, jsfile: str)
     p_seapar_arr         = build_param_array(s, 'p_seapar', 'double')
 
 
-    timevector, flist, qlist, yr, yrstart, yrend = read_file_lists(s.tv_list, image_file_list, quality_file_list)
+    timevector, flist, qlist, yr, yrstart, yrend = read_file_lists(s.tv_list, s.image_file_list, s.quality_file_list)
  
     z = len(flist)
     print(f'num of images: {z}')
@@ -71,7 +71,7 @@ def run(image_file_list: str, quality_file_list: str, lc_file: str, jsfile: str)
     elif int(s.p_st_timestep)<0:
         p_outindex = build_monthly_sample_indices(yrstart, yr)
     elif int(s.p_st_timestep)==0:
-        p_outindex = np.arange(1, yr * 365 + 1)[:: int(9999)]
+        p_outindex = np.arange(1, yr * 365 + 1)[:: int(9999)] # need to change later
     p_outindex_num = len(p_outindex)
 
     with rasterio.open(flist[0], 'r') as temp:
@@ -116,7 +116,7 @@ def run(image_file_list: str, quality_file_list: str, lc_file: str, jsfile: str)
 
     
     # compute memory blocks
-    y_slice_size, num_block = memory_plan(dx, dy, z, p_outindex_num, yr, s.para_check, s.max_memory_gb)
+    y_slice_size, num_block = memory_plan(dx, dy, z, p_outindex_num, yr, s.max_memory_gb)
     y_slice_end = dy % y_slice_size if (dy % y_slice_size) > 0 else y_slice_size
     print('y_slice_size = ' + str(y_slice_size))
 

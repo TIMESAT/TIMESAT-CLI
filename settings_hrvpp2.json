@@ -1,4 +1,4 @@
-{
+{ "threads": 10,
   "settings": {
     "tv_list": {
       "value": "",
@@ -21,7 +21,7 @@
       "description": "Directory where TIMESAT results will be saved. Subfolders 'ST/' (smoothed time series) and 'VPP/' (phenology parameters) will be created inside."
     },
     "imwindow": {
-      "value": [0, 0, 50, 50],
+      "value": [0, 0, 200, 200],
       "description": "Sub-window to process: [x_offset, y_offset, width, height]. Use [0,0,0,0] for the full image."
     },
 
@@ -64,14 +64,6 @@
     "max_memory_gb": {
       "value": 10,
       "description": "Maximum memory (GB) the program should use. Determines block size."
-    },
-    "para_check": {
-      "value": 10,
-      "description": "Number of CPU cores to use. If >1, Ray parallel processing is enabled."
-    },
-    "ray_dir": {
-      "value": "",
-      "description": "Temporary directory for Ray (only used if para_check > 1). Must be writable."
     },
     "scale": {
       "value": 1,

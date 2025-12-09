@@ -1,11 +1,6 @@
 from __future__ import annotations
 import math, os, datetime
 
-import numpy as np
-import rasterio
-
-import timesat  # external dependency
-
 from .config import load_config, build_param_array
 from .readers import read_file_lists, open_image_data
 from .fsutils import create_output_folders, memory_plan, close_all
@@ -36,6 +31,11 @@ def _build_output_filenames(st_folder: str, vpp_folder: str, p_outindex, yrstart
 
 
 def run(jsfile: str) -> None:
+
+    import numpy as np
+    import rasterio
+    import timesat  # external dependency
+
     print(jsfile)
     cfg = load_config(jsfile)
     s = cfg.settings
@@ -116,7 +116,7 @@ def run(jsfile: str) -> None:
 
     
     # compute memory blocks
-    y_slice_size, num_block = memory_plan(dx, dy, z, p_outindex_num, yr, s.para_check, s.max_memory_gb)
+    y_slice_size, num_block = memory_plan(dx, dy, z, p_outindex_num, yr, s.max_memory_gb)
     y_slice_end = dy % y_slice_size if (dy % y_slice_size) > 0 else y_slice_size
     print('y_slice_size = ' + str(y_slice_size))
 

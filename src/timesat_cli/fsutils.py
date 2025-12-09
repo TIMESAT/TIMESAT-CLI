@@ -19,7 +19,6 @@ def memory_plan(
     z: int,
     p_outindex_num: int,
     yr: int,
-    num_core: int,
     max_memory_gb: float,
 ) -> tuple[int, int]:
     num_layers = (
@@ -30,8 +29,8 @@ def memory_plan(
     )
     
     bytes_per = 4  # float32
-    safety = 0.2   # keep 60% margin for overhead
-    max_bytes = max_memory_gb * (2 ** 30) * safety / num_core
+    safety = 0.8   # keep 60% margin for overhead
+    max_bytes = max_memory_gb * (2 ** 30) * safety
 
     dy_max = max_bytes / (dx * num_layers * bytes_per) if num_layers > 0 else dy
     y_slice_size = int(min(math.floor(dy_max), dy)) if dy_max > 0 else dy
