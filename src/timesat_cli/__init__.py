@@ -23,7 +23,7 @@ def execute(jsfile: str) -> None:
         os.environ.setdefault("NUMEXPR_NUM_THREADS", threads)
 
     # 3. Import processing after setting environment
-    from .processing import run  # use its real name
+    from .processing import run 
 
     # 4. Call it directly
     return run(jsfile)
