@@ -7,11 +7,11 @@ def run(jsfile: str) -> None:
     import rasterio
     import timesat  # external dependency
 
-    from timesat_cli.config import load_config, build_param_array
-    from timesat_cli.readers import read_file_lists, open_image_data
-    from timesat_cli.fsutils import create_output_folders, memory_plan, close_all
-    from timesat_cli.writers import prepare_profiles, write_layers
-    from timesat_cli.dateutils import date_with_ignored_day, build_monthly_sample_indices
+    from .config import load_config, build_param_array
+    from .readers import read_file_lists, open_image_data
+    from .fsutils import create_output_folders, memory_plan, close_all
+    from .writers import prepare_profiles, write_layers
+    from .dateutils import date_with_ignored_day, build_monthly_sample_indices
 
     VPP_NAMES = ["SOSD","SOSV","LSLOPE","EOSD","EOSV","RSLOPE","LENGTH",
                  "MINV","MAXD","MAXV","AMPL","TPROD","SPROD"]
