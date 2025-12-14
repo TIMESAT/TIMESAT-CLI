@@ -1,6 +1,6 @@
 from __future__ import annotations
 import math, os, datetime
-os.environ["OMP_NUM_THREADS"] = '10'
+#os.environ["OMP_NUM_THREADS"] = '10'
 from timesat_cli.config import load_config, build_param_array
 from timesat_cli.readers import read_file_lists, open_image_data
 from timesat_cli.fsutils import create_output_folders, memory_plan, close_all
