@@ -23,7 +23,7 @@ dependencies = [
   "numpy",
   "rasterio",
   "pandas",
-  "timesat>=4.1.11",
+  "timesat>=4.1.19",
 ]
 
 [dependency-groups] 
