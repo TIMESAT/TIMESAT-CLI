@@ -10,7 +10,7 @@ from rasterio.windows import Window
 
 from .qa import assign_qa_weight
 
-__all__ = ["read_file_lists", "open_image_data"]
+__all__ = ["read_file_lists", "open_image_data","open_image_data_batched"]
 
 def _parse_dates_from_name(name: str) -> tuple[int, int, int]:
     date_regex1 = r"\d{4}-\d{2}-\d{2}"
@@ -157,3 +157,131 @@ def open_image_data(
 
     return vi, qa, lc
 
+
+def open_image_data_batched(
+    x_map: int,
+    y_map: int,
+    x: int,
+    y: int,
+    data_files: list[str],
+    qa_files: list[str],
+    lc_file: str | None,
+    data_type: str,
+    p_a,
+    layer: int,
+    batch_size: int = 32,
+    s3_opts: dict | None = None,
+):
+    """
+    Read VI, QA, and LC blocks by opening datasets in small batches.
+
+    This is usually faster and more stable than keeping hundreds/thousands of
+    datasets open at once (common for 800+ VI + 800+ QA time series), especially
+    over S3/object storage.
+
+    Parameters
+    ----------
+    batch_size : int
+        Max number of datasets kept open simultaneously per VI/QA pass.
+        Typical values: 16–32 (S3), 64–128 (local SSD).
+    """
+
+    z = len(data_files)
+
+    vi = np.empty((y, x, z), order="F", dtype=data_type)
+    qa = np.empty((y, x, z), order="F", dtype=data_type)
+    lc = np.empty((y, x), order="F", dtype=np.uint8)
+
+    win = Window(x_map, y_map, x, y)
+
+    if s3_opts:
+        with rasterio.Env(**s3_opts):
+
+                # 1) VI in batches
+                for j0 in range(0, z, batch_size):
+                    j1 = min(z, j0 + batch_size)
+                    dss = [rasterio.open(p, "r") for p in data_files[j0:j1]]
+                    try:
+                        for k, ds in enumerate(dss):
+                            ds.read(layer, window=win, out=vi[:, :, j0 + k])
+                    finally:
+                        for ds in dss:
+                            try:
+                                ds.close()
+                            except Exception:
+                                pass
+
+                # 2) QA in batches (or fill with ones)
+                if len(qa_files) == 0:
+                    qa.fill(1)
+                else:
+                    for j0 in range(0, z, batch_size):
+                        j1 = min(z, j0 + batch_size)
+                        dss = [rasterio.open(p, "r") for p in qa_files[j0:j1]]
+                        try:
+                            for k, ds in enumerate(dss):
+                                ds.read(layer, window=win, out=qa[:, :, j0 + k])
+                        finally:
+                            for ds in dss:
+                                try:
+                                    ds.close()
+                                except Exception:
+                                    pass
+
+                    qa = assign_qa_weight(p_a, qa)
+
+                # 3) LC once per block
+                if not lc_file:
+                    lc.fill(1)
+                else:
+                    with rasterio.open(lc_file, "r") as ds:
+                        ds.read(1, window=win, out=lc)
+                    if lc.dtype != np.uint8:
+                        lc[:] = lc.astype(np.uint8, copy=False)
+
+                return vi, qa, lc
+    else:
+
+            # 1) VI in batches
+            for j0 in range(0, z, batch_size):
+                j1 = min(z, j0 + batch_size)
+                dss = [rasterio.open(p, "r") for p in data_files[j0:j1]]
+                try:
+                    for k, ds in enumerate(dss):
+                        ds.read(layer, window=win, out=vi[:, :, j0 + k])
+                finally:
+                    for ds in dss:
+                        try:
+                            ds.close()
+                        except Exception:
+                            pass
+
+            # 2) QA in batches (or fill with ones)
+            if len(qa_files) == 0:
+                qa.fill(1)
+            else:
+                for j0 in range(0, z, batch_size):
+                    j1 = min(z, j0 + batch_size)
+                    dss = [rasterio.open(p, "r") for p in qa_files[j0:j1]]
+                    try:
+                        for k, ds in enumerate(dss):
+                            ds.read(layer, window=win, out=qa[:, :, j0 + k])
+                    finally:
+                        for ds in dss:
+                            try:
+                                ds.close()
+                            except Exception:
+                                pass
+
+                qa = assign_qa_weight(p_a, qa)
+
+            # 3) LC once per block
+            if not lc_file:
+                lc.fill(1)
+            else:
+                with rasterio.open(lc_file, "r") as ds:
+                    ds.read(1, window=win, out=lc)
+                if lc.dtype != np.uint8:
+                    lc[:] = lc.astype(np.uint8, copy=False)
+
+            return vi, qa, lc
