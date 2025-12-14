@@ -58,7 +58,7 @@
       "description": "Outlier detection flag. 0 = off, 1 = on."
     },
     "p_printflag": {
-      "value": 0,
+      "value": 3,
       "description": "Verbose print flag for TIMESAT internal processing. 0 = silent, 1 = detailed logging."
     },
     "max_memory_gb": {

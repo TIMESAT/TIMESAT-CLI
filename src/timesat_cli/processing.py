@@ -8,7 +8,7 @@ def run(jsfile: str) -> None:
     import timesat  # external dependency
 
     from .config import load_config, build_param_array
-    from .readers import read_file_lists, open_image_data
+    from .readers import read_file_lists, open_image_data_batched
     from .fsutils import create_output_folders, memory_plan, close_all
     from .writers import prepare_profiles, write_layers
     from .dateutils import date_with_ignored_day, build_monthly_sample_indices
@@ -69,18 +69,19 @@ def run(jsfile: str) -> None:
     
     # -------load inputs----------------
     s3_opts = getattr(s, "s3", None)
+    batch_size = int(getattr(s, "read_batch_size", 32))  # recommended: 16–32 (S3), 64–128 (local SSD)
 
-    if s3_opts:
-        # Open all files inside a single S3 environment
-        with rasterio.Env(**s3_opts):
-            data_datasets = [rasterio.open(p, "r") for p in flist]
-            qa_datasets   = [rasterio.open(p, "r") for p in qlist] if qlist else []
-            lc_dataset    = rasterio.open(s.lc_file, "r") if s.lc_file else None
-    else:
-        # Local files
-        data_datasets = [rasterio.open(p, "r") for p in flist]
-        qa_datasets   = [rasterio.open(p, "r") for p in qlist] if qlist else []
-        lc_dataset    = rasterio.open(s.lc_file, "r") if s.lc_file else None
+    # if s3_opts:
+    #     # Open all files inside a single S3 environment
+    #     with rasterio.Env(**s3_opts):
+    #         data_datasets = [rasterio.open(p, "r") for p in flist]
+    #         qa_datasets   = [rasterio.open(p, "r") for p in qlist] if qlist else []
+    #         lc_dataset    = rasterio.open(s.lc_file, "r") if s.lc_file else None
+    # else:
+    #     # Local files
+    #     data_datasets = [rasterio.open(p, "r") for p in flist]
+    #     qa_datasets   = [rasterio.open(p, "r") for p in qlist] if qlist else []
+    #     lc_dataset    = rasterio.open(s.lc_file, "r") if s.lc_file else None
 
     # ------load image info---------------
     with rasterio.open(flist[0], 'r') as temp:
@@ -147,14 +148,16 @@ def run(jsfile: str) -> None:
         x_map = int(s.imwindow[0])
         y_map = int(iblock * y_slice_size + s.imwindow[1])
 
-        vi, qa, lc = open_image_data(
+        vi, qa, lc = open_image_data_batched(
             x_map, y_map, x, y,
-            data_datasets,
-            qa_datasets,
-            lc_dataset,
+            flist,
+            qlist,
+            (s.lc_file if s.lc_file else None),
             img_profile['dtype'],
             s.p_a,
-            s.p_band_id
+            s.p_band_id,
+            batch_size=batch_size,
+            s3_opts=s3_opts,
         )
 
         print('--- start TIMESAT processing ---  starttime: ' + str(datetime.datetime.now()))
@@ -183,10 +186,18 @@ def run(jsfile: str) -> None:
             nseason  = np.moveaxis(nseason, -1, 0)
             write_layers(ns_dataset, nseason, window)
 
+        # Move to (t, y, x)
+        yfit = np.moveaxis(yfit, -1, 0)
+
+        # Avoid RuntimeWarning: invalid value encountered in cast
+        # (NaN/inf may appear for pixels with insufficient data / failed fits)
+        nodata_val = img_profile_st.get("nodata", s.p_nodata)
+        yfit = np.nan_to_num(yfit, nan=nodata_val, posinf=nodata_val, neginf=nodata_val)
+
         if s.scale == 1 and s.offset == 0:
-            yfit = np.moveaxis(yfit, -1, 0).astype(img_profile['dtype'])
+            yfit = yfit.astype(img_profile['dtype'])
         else:
-            yfit = np.moveaxis(yfit, -1, 0).astype('float32')
+            yfit = yfit.astype('float32')
         write_layers(st_datasets, yfit, window)
 
         yfitqa  = np.moveaxis(yfitqa, -1, 0)
@@ -195,9 +206,6 @@ def run(jsfile: str) -> None:
         print(f'Block: {iblock + 1}/{num_block}  finishedtime: {datetime.datetime.now()}')
 
     close_all(
-        data_datasets,
-        qa_datasets,
-        lc_dataset,
         st_datasets,
         stqa_datasets,
     )
