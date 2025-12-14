@@ -1,6 +1,6 @@
 from __future__ import annotations
 import math, os, datetime
-
+os.environ["OMP_NUM_THREADS"] = '10'
 from timesat_cli.config import load_config, build_param_array
 from timesat_cli.readers import read_file_lists, open_image_data
 from timesat_cli.fsutils import create_output_folders, memory_plan, close_all
@@ -207,4 +207,4 @@ if __name__ == "__main__":
     image_file_list = "C:\\Users\\Zhanzhang.Cai\\Documents\\work\\extract_exsample_tile_out\\ndvi_list.txt"
     quality_file_list = "C:\\Users\\Zhanzhang.Cai\\Documents\\work\\extract_exsample_tile_out\\los_mask_list.txt"
     lc_file = "C:\\Users\\Zhanzhang.Cai\\Documents\\work\\extract_exsample_tile_out\\LC_31UFS_2021_V3_window.tif"
-    run(image_file_list, quality_file_list, lc_file, 'settings_hrvpp2.json')
+    run('settings_hrvpp2.json')

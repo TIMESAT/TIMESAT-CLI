@@ -1,4 +1,4 @@
-{ "threads": 10,
+{
   "settings": {
     "tv_list": {
       "value": "",
@@ -17,7 +17,7 @@
       "description": "Optional: land cover GeoTIFF to apply class-specific parameters. Values in the raster should match 'landuse' IDs defined under class blocks. Leave empty string if not used."
     },
     "outputfolder": {
-      "value": "C:\\Users\\Zhanzhang.Cai\\Documents\\work\\Test",
+      "value": "C:\\Users\\Zhanzhang.Cai\\Documents\\work\\Test2",
       "description": "Directory where TIMESAT results will be saved. Subfolders 'ST/' (smoothed time series) and 'VPP/' (phenology parameters) will be created inside."
     },
     "imwindow": {
@@ -62,7 +62,7 @@
       "description": "Verbose print flag for TIMESAT internal processing. 0 = silent, 1 = detailed logging."
     },
     "max_memory_gb": {
-      "value": 10,
+      "value": 2,
       "description": "Maximum memory (GB) the program should use. Determines block size."
     },
     "scale": {

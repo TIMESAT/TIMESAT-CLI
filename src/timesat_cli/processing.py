@@ -66,14 +66,23 @@ def run(jsfile: str) -> None:
     print('Last  image: ' + os.path.basename(flist[-1]))
     print(yrstart)
 
-    if int(s.p_st_timestep)>0:
-        p_outindex = np.arange(1, yr * 365 + 1)[:: int(s.p_st_timestep)]
-    elif int(s.p_st_timestep)<0:
-        p_outindex = build_monthly_sample_indices(yrstart, yr)
-    elif int(s.p_st_timestep)==0:
-        p_outindex = np.arange(1, yr * 365 + 1)[:: int(9999)]
-    p_outindex_num = len(p_outindex)
+    
+    # -------load inputs----------------
+    s3_opts = getattr(s, "s3", None)
 
+    if s3_opts:
+        # Open all files inside a single S3 environment
+        with rasterio.Env(**s3_opts):
+            data_datasets = [rasterio.open(p, "r") for p in flist]
+            qa_datasets   = [rasterio.open(p, "r") for p in qlist] if qlist else []
+            lc_dataset    = rasterio.open(s.lc_file, "r") if s.lc_file else None
+    else:
+        # Local files
+        data_datasets = [rasterio.open(p, "r") for p in flist]
+        qa_datasets   = [rasterio.open(p, "r") for p in qlist] if qlist else []
+        lc_dataset    = rasterio.open(s.lc_file, "r") if s.lc_file else None
+
+    # ------load image info---------------
     with rasterio.open(flist[0], 'r') as temp:
         img_profile = temp.profile
 
@@ -82,7 +91,18 @@ def run(jsfile: str) -> None:
     else:
         dx, dy = int(s.imwindow[2]), int(s.imwindow[3])
 
+    
+
+    # ------output-----------------
     st_folder, vpp_folder = create_output_folders(s.outputfolder)
+
+    if int(s.p_st_timestep)>0:
+        p_outindex = np.arange(1, yr * 365 + 1)[:: int(s.p_st_timestep)]
+    elif int(s.p_st_timestep)<0:
+        p_outindex = build_monthly_sample_indices(yrstart, yr)
+    elif int(s.p_st_timestep)==0:
+        p_outindex = np.arange(1, yr * 365 + 1)[:: int(9999)]
+    p_outindex_num = len(p_outindex)
 
     outyfitfn, outyfitqafn, outvppfn, outvppqafn, outnsfn = _build_output_filenames(st_folder, vpp_folder, p_outindex, yrstart, yrend, s.p_ignoreday)
 
@@ -115,24 +135,10 @@ def run(jsfile: str) -> None:
         stqa_datasets.append(ds)
 
     
-    # compute memory blocks
+    # compute blocks
     y_slice_size, num_block = memory_plan(dx, dy, z, p_outindex_num, yr, s.max_memory_gb)
     y_slice_end = dy % y_slice_size if (dy % y_slice_size) > 0 else y_slice_size
     print('y_slice_size = ' + str(y_slice_size))
-
-    s3_opts = getattr(s, "s3", None)
-
-    if s3_opts:
-        # Open all files inside a single S3 environment
-        with rasterio.Env(**s3_opts):
-            data_datasets = [rasterio.open(p, "r") for p in flist]
-            qa_datasets   = [rasterio.open(p, "r") for p in qlist] if qlist else []
-            lc_dataset    = rasterio.open(s.lc_file, "r") if s.lc_file else None
-    else:
-        # Local files
-        data_datasets = [rasterio.open(p, "r") for p in flist]
-        qa_datasets   = [rasterio.open(p, "r") for p in qlist] if qlist else []
-        lc_dataset    = rasterio.open(s.lc_file, "r") if s.lc_file else None
 
     for iblock in range(num_block):
         print(f'Processing block: {iblock + 1}/{num_block}  starttime: {datetime.datetime.now()}')
