@@ -1,15 +1,18 @@
-{
+{ 
   "settings": {
+    "s3env": { 
+      "value": ".env" 
+    },
     "tv_list": {
       "value": "",
       "description": "Text file with one date per line. Each date must be either YYYYMMDD (e.g. 20210415) or YYYYDOY (e.g. 2021105). The number of dates must equal the number of image files."
     },
     "image_file_list": {
-      "value": "C:\\Users\\Zhanzhang.Cai\\Documents\\work\\extract_exsample_tile_out\\ndvi_list.csv",
+      "value": "C:\\Users\\Zhanzhang.Cai\\Documents\\work\\FAPAR_test\\FAPAR_files_102021_022024.csv",
       "description": "Text file listing full paths to all input raster images (one per line)."
     },
     "quality_file_list": {
-      "value": "C:\\Users\\Zhanzhang.Cai\\Documents\\work\\extract_exsample_tile_out\\los_mask_list.csv",
+      "value": "C:\\Users\\Zhanzhang.Cai\\Documents\\work\\FAPAR_test\\LOS_31UFS_lst_202111_202402.csv",
       "description": "Optional: text file listing full paths to QA rasters (one per line, same length as images). Leave empty string if not used."
     },
     "lc_file": {
@@ -21,7 +24,7 @@
       "description": "Directory where TIMESAT results will be saved. Subfolders 'ST/' (smoothed time series) and 'VPP/' (phenology parameters) will be created inside."
     },
     "imwindow": {
-      "value": [0, 0, 0, 0],
+      "value": [0, 0, 50, 50],
       "description": "Sub-window to process: [x_offset, y_offset, width, height]. Use [0,0,0,0] for the full image."
     },
 
@@ -34,7 +37,7 @@
       "description": "Day number to ignore in leap years (default: 366 to ignore Dec 31, offseason in the northern hemisphere)."
     },
     "p_ylu": {
-      "value": [0.0, 1.0],
+      "value": [0.0, 10000.0],
       "description": "Data range limits [min, max]. Values outside are clipped."
     },
     "p_a": {

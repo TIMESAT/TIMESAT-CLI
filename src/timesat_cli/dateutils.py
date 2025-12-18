@@ -7,7 +7,7 @@ from __future__ import annotations
 import datetime
 import numpy as np
 
-__all__ = ["date_with_ignored_day", "build_monthly_sample_indices"]
+__all__ = ["date_with_ignored_day", "generate_output_timeseries_dates"]
 
 
 def is_leap_year(y: int) -> bool:
@@ -93,3 +93,26 @@ def build_monthly_sample_indices(yrstart: int, yr: int) -> np.ndarray:
         year_offset += 365
 
     return np.array(indices, dtype=int)
+
+
+def generate_output_timeseries_dates(p_st_timestep, yr, yrstart):
+    p_st_timestep = int(p_st_timestep)
+
+    if p_st_timestep > 0:
+        p_outindex = np.arange(1, yr * 365 + 1)[::p_st_timestep]
+    elif p_st_timestep < 0:
+        p_outindex = build_monthly_sample_indices(yrstart, yr)
+    else:  # p_st_timestep == 0
+        p_outindex = np.arange(1, yr * 365 + 1)[::9999]
+
+    # HRVPP2 timestep: delete first year and last year from p_outindex
+    if p_st_timestep == -1:
+        first_year_end = 365
+        last_year_start = (yr - 1) * 365 + 1
+
+        # keep only indices that are NOT in year 1 and NOT in last year
+        p_outindex = p_outindex[(p_outindex > first_year_end) & (p_outindex < last_year_start)]
+
+    p_outindex_num = len(p_outindex)
+    
+    return p_outindex, p_outindex_num

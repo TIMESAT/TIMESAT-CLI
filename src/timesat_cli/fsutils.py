@@ -32,7 +32,7 @@ def memory_plan(
     safety = 0.6   # keep 60% margin for overhead
     max_bytes = max_memory_gb * (2 ** 30) * safety
 
-    dy_max = max_bytes / (dx * num_layers * bytes_per * 2) if num_layers > 0 else dy
+    dy_max = max_bytes / (dx * num_layers * bytes_per) if num_layers > 0 else dy
     y_slice_size = int(min(math.floor(dy_max), dy)) if dy_max > 0 else dy
     y_slice_size = max(1, y_slice_size)
     num_block = int(math.ceil(dy / y_slice_size))
