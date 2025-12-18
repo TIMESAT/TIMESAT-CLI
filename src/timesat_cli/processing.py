@@ -67,10 +67,10 @@ def run(jsfile: str) -> None:
     print(yrstart)
 
     # -------load inputs----------------
-    use_s3  = getattr(s, "s3env", None)
-    if use_s3:
+    s3env  = getattr(s, "s3env", None)
+    if s3env:
         from .config_s3 import load_s3_config, build_rasterio_s3_opts, to_vsis3_paths
-        cfg_s3 = load_s3_config()
+        cfg_s3 = load_s3_config(s3env)
         s3_opts = build_rasterio_s3_opts(cfg_s3)
         flist = [to_vsis3_paths(s3_opts, cfg_s3["S3_BUCKET"], k) for k in flist]
         qlist = [to_vsis3_paths(s3_opts, cfg_s3["S3_BUCKET"], k) for k in qlist] if qlist else []

@@ -7,12 +7,12 @@ from botocore.config import Config
 
 __all__ = ["load_s3_config","build_rasterio_s3_opts","to_vsis3_paths"]
 
-def load_s3_config():
+def load_s3_config(s3env: str):
     """
     Load and validate S3 / CloudFerro configuration from environment variables.
     Returns a dict with validated values.
     """
-    load_dotenv()  # default path
+    load_dotenv(s3env)  # default path
 
     config = {
         "AWS_ACCESS_KEY_ID": os.getenv("AWS_ACCESS_KEY_ID"),
