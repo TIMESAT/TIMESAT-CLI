@@ -22,6 +22,7 @@ class ClassParams:
 
 @dataclass
 class Settings:
+    s3env: str
     image_file_list: str
     quality_file_list: str
     tv_list: str
@@ -87,6 +88,7 @@ def load_config(jsfile: str) -> Config:
         )
 
     settings = Settings(
+        s3env=s["s3env"]["value"],
         image_file_list=s["image_file_list"]["value"],
         quality_file_list=s["quality_file_list"]["value"],
         tv_list=s["tv_list"]["value"],

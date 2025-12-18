@@ -23,6 +23,8 @@ dependencies = [
   "numpy",
   "rasterio",
   "pandas",
+  "dotenv",
+  "boto3",
   "timesat>=4.1.19",
 ]
 

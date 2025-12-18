@@ -8,10 +8,10 @@ def run(jsfile: str) -> None:
     import timesat  # external dependency
 
     from .config import load_config, build_param_array
-    from .readers import read_file_lists, open_image_data_batched
+    from .readers import read_file_lists, open_image_data
     from .fsutils import create_output_folders, memory_plan, close_all
     from .writers import prepare_profiles, write_layers
-    from .dateutils import date_with_ignored_day, build_monthly_sample_indices
+    from .dateutils import date_with_ignored_day, generate_output_timeseries_dates
 
     VPP_NAMES = ["SOSD","SOSV","LSLOPE","EOSD","EOSV","RSLOPE","LENGTH",
                  "MINV","MAXD","MAXV","AMPL","TPROD","SPROD"]
@@ -66,25 +66,21 @@ def run(jsfile: str) -> None:
     print('Last  image: ' + os.path.basename(flist[-1]))
     print(yrstart)
 
-    
     # -------load inputs----------------
-    s3_opts = getattr(s, "s3", None)
-    batch_size = int(getattr(s, "read_batch_size", 32))  # recommended: 16–32 (S3), 64–128 (local SSD)
+    use_s3  = getattr(s, "s3env", None)
+    if use_s3:
+        from .config_s3 import load_s3_config, build_rasterio_s3_opts, to_vsis3_paths
+        cfg_s3 = load_s3_config()
+        s3_opts = build_rasterio_s3_opts(cfg_s3)
+        flist = [to_vsis3_paths(s3_opts, cfg_s3["S3_BUCKET"], k) for k in flist]
+        qlist = [to_vsis3_paths(s3_opts, cfg_s3["S3_BUCKET"], k) for k in qlist] if qlist else []
+    else:
+        s3_opts = None
 
-    # if s3_opts:
-    #     # Open all files inside a single S3 environment
-    #     with rasterio.Env(**s3_opts):
-    #         data_datasets = [rasterio.open(p, "r") for p in flist]
-    #         qa_datasets   = [rasterio.open(p, "r") for p in qlist] if qlist else []
-    #         lc_dataset    = rasterio.open(s.lc_file, "r") if s.lc_file else None
-    # else:
-    #     # Local files
-    #     data_datasets = [rasterio.open(p, "r") for p in flist]
-    #     qa_datasets   = [rasterio.open(p, "r") for p in qlist] if qlist else []
-    #     lc_dataset    = rasterio.open(s.lc_file, "r") if s.lc_file else None
+    # batch_size = int(getattr(s, "read_batch_size", 32))  # recommended: 16–32 (S3), 64–128 (local SSD)
 
     # ------load image info---------------
-    with rasterio.open(flist[0], 'r') as temp:
+    with rasterio.open(flist[0], "r") as temp:
         img_profile = temp.profile
 
     if sum(s.imwindow) == 0:
@@ -92,18 +88,11 @@ def run(jsfile: str) -> None:
     else:
         dx, dy = int(s.imwindow[2]), int(s.imwindow[3])
 
-    
 
     # ------output-----------------
     st_folder, vpp_folder = create_output_folders(s.outputfolder)
 
-    if int(s.p_st_timestep)>0:
-        p_outindex = np.arange(1, yr * 365 + 1)[:: int(s.p_st_timestep)]
-    elif int(s.p_st_timestep)<0:
-        p_outindex = build_monthly_sample_indices(yrstart, yr)
-    elif int(s.p_st_timestep)==0:
-        p_outindex = np.arange(1, yr * 365 + 1)[:: int(9999)]
-    p_outindex_num = len(p_outindex)
+    p_outindex, p_outindex_num = generate_output_timeseries_dates(s.p_st_timestep, yr, yrstart)
 
     outyfitfn, outyfitqafn, outvppfn, outvppqafn, outnsfn = _build_output_filenames(st_folder, vpp_folder, p_outindex, yrstart, yrend, s.p_ignoreday)
 
@@ -148,7 +137,18 @@ def run(jsfile: str) -> None:
         x_map = int(s.imwindow[0])
         y_map = int(iblock * y_slice_size + s.imwindow[1])
 
-        vi, qa, lc = open_image_data_batched(
+        # vi, qa, lc = open_image_data_batched(
+        #     x_map, y_map, x, y,
+        #     flist,
+        #     qlist,
+        #     (s.lc_file if s.lc_file else None),
+        #     img_profile['dtype'],
+        #     s.p_a,
+        #     s.p_band_id,
+        #     batch_size=batch_size,
+        #     s3_opts=s3_opts,
+        # )
+        vi, qa, lc = open_image_data(
             x_map, y_map, x, y,
             flist,
             qlist,
@@ -156,8 +156,6 @@ def run(jsfile: str) -> None:
             img_profile['dtype'],
             s.p_a,
             s.p_band_id,
-            batch_size=batch_size,
-            s3_opts=s3_opts,
         )
 
         print('--- start TIMESAT processing ---  starttime: ' + str(datetime.datetime.now()))
@@ -189,8 +187,6 @@ def run(jsfile: str) -> None:
         # Move to (t, y, x)
         yfit = np.moveaxis(yfit, -1, 0)
 
-        # Avoid RuntimeWarning: invalid value encountered in cast
-        # (NaN/inf may appear for pixels with insufficient data / failed fits)
         nodata_val = img_profile_st.get("nodata", s.p_nodata)
         yfit = np.nan_to_num(yfit, nan=nodata_val, posinf=nodata_val, neginf=nodata_val)
 
