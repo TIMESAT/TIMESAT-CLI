@@ -76,13 +76,40 @@ def read_file_lists(
     qlist: list[str] | str = ""
     with open(data_list, "r") as f:
         flist = f.read().splitlines()
+    timevector, yr, yrstart, yrend = _read_time_vector(tlist, flist)
+
     if qa_list != "":
         with open(qa_list, "r") as f:
             qlist = f.read().splitlines()
         if len(flist) != len(qlist):
             raise ValueError("No. of Data and QA are not consistent")
+        timevector_q, yr_q, yrstart_q, yrend_q = _read_time_vector(tlist, qlist)
 
-    timevector, yr, yrstart, yrend = _read_time_vector(tlist, flist)
+        # Check if timevector and timevector_q are the same, otherwise align QA to data timeline
+        if not (len(timevector) == len(timevector_q) and np.array_equal(timevector, timevector_q)):
+
+            # Map QA timestamps -> QA path
+            qa_map: dict[float, str] = {float(t): p for t, p in zip(timevector_q, qlist)}
+
+            aligned_qlist: list[str] = []
+            missing_times: list[float] = []
+
+            for t in timevector:
+                key = float(t)
+                if key in qa_map:
+                    aligned_qlist.append(qa_map[key])
+                else:
+                    aligned_qlist.append("")  # placeholder
+                    missing_times.append(key)
+
+            if missing_times:
+                raise ValueError(
+                    "QA list does not cover all data timestamps. Missing QA for "
+                    f"{len(missing_times)} timestamps (first 10 shown): {missing_times[:10]}"
+                )
+
+            qlist = aligned_qlist
+
     timevector, flist, qlist = _unique_by_timevector(flist, qlist, timevector)
     return (
         timevector,
