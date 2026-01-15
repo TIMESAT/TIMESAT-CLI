@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling>=1.25", "hatch-vcs>=0.4"]  # <-- add hatch-vcs
+requires = ["hatchling>=1.25", "hatch-vcs>=0.4"]
 build-backend = "hatchling.build"
 
 [project]
@@ -8,39 +8,43 @@ dynamic = ["version"]
 description = "Python-based command line interface for TIMESAT"
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.10"
-license = { text = "GPL-3.0-only" }
+
+# MIT license (PEP 621)
+license = { text = "MIT" }
+
 authors = [{ name = "Zhanzhang Cai" }]
+
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Science/Research",
   "Topic :: Scientific/Engineering :: GIS",
   "Programming Language :: Python :: 3",
-  "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+  "License :: OSI Approved :: MIT License",
   "Environment :: Console",
   "Operating System :: OS Independent",
 ]
+
 dependencies = [
   "numpy",
   "rasterio",
   "pandas",
-  "dotenv",
+  "python-dotenv",
   "boto3",
-  "timesat>=4.1.19",
+  "timesat>=4.2.1,<4.3",
 ]
 
-[dependency-groups] 
+[dependency-groups]
 dev = ["pre-commit", "ruff", "matplotlib"]
 
 [tool.hatch.version]
-source = "vcs"                                    # <-- tell Hatch to use Git tags
+source = "vcs"
 
 [project.scripts]
-timesat = "timesat_cli.__main__:main"         # installs `timesat` command
-# or:
-timesat-cli = "timesat_cli.__main__:main"     # installs `timesat-cli` command
+timesat = "timesat_cli.__main__:main"
+timesat-cli = "timesat_cli.__main__:main"
 
 [tool.hatch.build]
-include = ["src/**", "README.md", "LICENSE"]
+include = ["src/**", "README.md", "LICENSE", "NOTICE"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/timesat_cli"]

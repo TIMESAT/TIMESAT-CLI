@@ -71,7 +71,7 @@ pip install timesat-cli
 
 ## Running the Application
 
-After installation, start the GUI with:
+After installation, start the CLI with:
 
 ```bash
 timesat-cli path/to/settings.json

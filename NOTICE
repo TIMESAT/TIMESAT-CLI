@@ -1,0 +1,22 @@
+NOTICE
+
+This project is released under the MIT License.
+
+This software provides open-source tools and interfaces for working with
+the TIMESAT algorithmic core.
+
+The TIMESAT core (distributed as the Python package "timesat") is
+proprietary software and is licensed separately.
+
+Use of this software does not grant any rights to use, redistribute,
+modify, or commercialize the TIMESAT core beyond the terms of the
+TIMESAT license.
+
+The TIMESAT core is freely available for non-commercial scientific
+research, academic teaching, and personal use only.
+Commercial use of the TIMESAT core requires a separate written agreement
+with the authors.
+
+Each third-party dependency used by this project is distributed under
+its own license. Users are responsible for complying with all applicable
+license terms.
