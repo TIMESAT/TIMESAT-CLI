@@ -135,26 +135,41 @@ Example (settings.json):
 
 ## License
 
-**TIMESAT-CLI** is released under the **GNU General Public License (GPL)**.  
-You are free to use, modify, and distribute this software under the terms of the GPL.
+**TIMESAT-CLI** is released under the **MIT License**.
 
-The GPL license applies **only to the TIMESAT-CLI source code and assets** provided in this repository.
+You are free to use, modify, and distribute this software under the terms
+of the MIT License.
 
-### 📦 Dependency Licenses
+The MIT License applies **only to the source code and assets provided in
+this repository**.
 
-- `timesat` may install additional open-source dependencies (e.g., Flask, pandas, NumPy).  
-- Each dependency retains its own license (MIT, BSD, Apache, etc.).  
-- Before redistributing or bundling this software, review the license terms of each dependency carefully.
+### 📦 Dependency and Usage Notice
 
-### ⚖️ Summary
+TIMESAT-CLI is an open-source command-line interface that depends on the
+**TIMESAT core**, which is **proprietary software** and licensed separately.
 
-| Component        | License Type | Notes |
-|------------------|--------------|-------|
-| TIMESAT-CLI      | GPL v3       | Open source, modification and redistribution permitted under GPL. |
-| TIMESAT          | Proprietary  | All rights reserved. Redistribution and modification prohibited without written consent. |
-| Other Dependencies | Various (MIT/BSD/Apache) | Check individual package licenses before redistribution. |
+Use of TIMESAT-CLI does **not** grant any rights to use the TIMESAT core
+beyond the terms of the TIMESAT license.
 
-For detailed license information, refer to the license files distributed with each installed package.
+- The TIMESAT core is freely available for **non-commercial scientific
+  research, academic teaching, and personal use**.
+- **Commercial use of the TIMESAT core requires a separate written agreement
+  with the authors.**
+
+Each dependency installed with this software retains its own license
+(MIT, BSD, Apache, etc.). Users are responsible for complying with the
+license terms of all installed components.
+
+### ⚖️ License Summary
+
+| Component          | License Type | Notes |
+|--------------------|--------------|-------|
+| TIMESAT-CLI        | MIT License  | Open-source CLI and workflow manager. |
+| TIMESAT core       | Proprietary  | Licensed separately; commercial use requires agreement. |
+| Other dependencies | Various (MIT/BSD/Apache) | See individual package licenses. |
+
+For full license texts, see the `LICENSE` and `NOTICE` files included
+with this repository and installed packages.
 
 ---
 
