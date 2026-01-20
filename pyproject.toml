@@ -40,11 +40,10 @@ dev = ["pre-commit", "ruff", "matplotlib"]
 source = "vcs"
 
 [project.scripts]
-timesat = "timesat_cli.__main__:main"
 timesat-cli = "timesat_cli.__main__:main"
 
 [tool.hatch.build]
 include = ["src/**", "README.md", "LICENSE", "NOTICE"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/timesat_cli"]
+packages = ["src/timesat_cli", "src/timesat_engine"]
