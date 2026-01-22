@@ -183,8 +183,7 @@ If you use **TIMESAT**, **TIMESAT-CLI** or **TIMESAT-GUI** in your research, ple
 ---
 
 ## Acknowledgments
-
-- [TIMESAT](https://www.nateko.lu.se/TIMESAT) — Original analysis framework for satellite time-series data.  
+  
 - This project acknowledges the Swedish National Space Agency (SNSA), the European Environment Agency (EEA), and the European Space Agency (ESA) for their support and for providing access to satellite data and related resources that made this software possible.
 
 ---
