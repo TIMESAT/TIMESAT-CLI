@@ -9,6 +9,7 @@ def run(jsfile: str) -> None:
 
     from .config import load_config, build_param_array
     from .readers import read_file_lists, open_image_data
+    from .qa import assign_qa_weight
     from .fsutils import create_output_folders, memory_plan, close_all
     from .writers import prepare_profiles, write_layers
     from .dateutils import date_with_ignored_day, generate_output_timeseries_dates
@@ -154,9 +155,10 @@ def run(jsfile: str) -> None:
             qlist,
             (s.lc_file if s.lc_file else None),
             img_profile['dtype'],
-            s.p_a,
             s.p_band_id,
         )
+
+        qa = assign_qa_weight(s.p_a, qa)
 
         print('--- start TIMESAT processing ---  starttime: ' + str(datetime.datetime.now()))
 
