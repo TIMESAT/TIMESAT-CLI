@@ -10,56 +10,92 @@ from rasterio.windows import Window
 
 from .qa import assign_qa_weight
 
-__all__ = ["read_file_lists", "open_image_data","open_image_data_batched"]
+__all__ = ["read_time_vector_data", "read_file_lists", "open_image_data", "open_image_data_batched"]
 
-def _parse_dates_from_name(name: str) -> tuple[int, int, int]:
-    date_regex1 = r"\d{4}-\d{2}-\d{2}"
-    date_regex2 = r"\d{4}\d{2}\d{2}"
-    try:
-        dates = re.findall(date_regex1, name)
-        position = name.find(dates[0])
-        y = int(name[position : position + 4])
-        m = int(name[position + 5 : position + 7])
-        d = int(name[position + 8 : position + 10])
-        return y, m, d
-    except Exception:
-        try:
-            dates = re.findall(date_regex2, name)
-            position = name.find(dates[0])
-            y = int(name[position : position + 4])
-            m = int(name[position + 4 : position + 6])
-            d = int(name[position + 6 : position + 8])
-            return y, m, d
-        except Exception as e:
-            raise ValueError(f"No date found in filename: {name}") from e
+
+def read_time_vector_data(lines):
+    """
+    Extract dates from band names (strings in `lines`).
+
+    Returns:
+        tv_yyyymmdd (np.ndarray, dtype=object): [YYYYMMDD or None, ...]
+        tv_yyyydoy  (np.ndarray, dtype=object): [YYYYDOY  or None, ...]
+        nyear       (int or None): number of years covered (inclusive)
+        yrstart     (int or None): first year
+        yrend       (int or None): last year
+    """
+    # Precompile patterns once
+    patterns = [
+        re.compile(r"(\d{4})(\d{2})(\d{2})"),          # YYYYMMDD
+        re.compile(r"(\d{4})(\d{3})"),                 # YYYYDOY
+        re.compile(r"(\d{4})[-_](\d{2})[-_](\d{2})"),  # YYYY-MM-DD or YYYY_MM_DD
+        re.compile(r"(\d{4})[-_](\d{3})"),             # YYYY-DOY or YYYY_DOY
+    ]
+
+    def parse_date(text):
+        """Return a datetime.date if a supported pattern is found; else None."""
+        for pat in patterns:
+            m = pat.search(text)
+            if not m:
+                continue
+
+            g = m.groups()
+            try:
+                if len(g) == 3:  # YYYY MM DD
+                    year, month, day = map(int, g)
+                    return datetime.datetime(year, month, day).date()
+
+                # len(g) == 2: YYYY + DOY
+                year = int(g[0])
+                doy = int(g[1])
+                if 1 <= doy <= 366:  # basic sanity
+                    return (datetime.datetime(year, 1, 1) + datetime.timedelta(days=doy - 1)).date()
+            except ValueError:
+                return None
+
+        return None
+
+    # Build lists aligned to `lines`
+    yyyymmdd_list = []
+    yyyydoy_list = []
+
+    for name in lines:
+        d = parse_date(str(name))
+        if d is None:
+            yyyymmdd_list.append(None)
+            yyyydoy_list.append(None)
+        else:
+            yyyymmdd_list.append(int(d.strftime("%Y%m%d")))
+            yyyydoy_list.append(int(d.strftime("%Y%j")))
+
+    # Use dtype=object to preserve None
+    tv_yyyymmdd = np.array(yyyymmdd_list, order="F", dtype="uint32")
+    tv_yyyydoy = np.array(yyyydoy_list, order="F", dtype="uint32")
+
+    # Compute year stats from valid entries only
+    valid_years = [v // 10000 for v in tv_yyyymmdd if v is not None]
+    if not valid_years:
+        return tv_yyyymmdd, tv_yyyydoy, None, None, None
+
+    yrstart = int(min(valid_years))
+    yrend = int(max(valid_years))
+    nyear = yrend - yrstart + 1
+
+    return tv_yyyymmdd, tv_yyyydoy, nyear, yrstart, yrend
+
 
 
 def _read_time_vector(tlist: str, filepaths: list[str]):
     """Return (timevector, yr, yrstart, yrend) in YYYYDOY format."""
     flist = [os.path.basename(p) for p in filepaths]
-    timevector = np.ndarray(len(flist), order="F", dtype="uint32")
     if tlist == "":
-        for i, fname in enumerate(flist):
-            y, m, d = _parse_dates_from_name(fname)
-            doy = (datetime.date(y, m, d) - datetime.date(y, 1, 1)).days + 1
-            timevector[i] = y * 1000 + doy
+        lines = flist
     else:
         with open(tlist, "r") as f:
             lines = f.read().splitlines()
-        for idx, val in enumerate(lines):
-            n = len(val)
-            if n == 8:  # YYYYMMDD
-                dt = datetime.datetime.strptime(val, "%Y%m%d")
-                timevector[idx] = int(f"{dt.year}{dt.timetuple().tm_yday:03d}")
-            elif n == 7:  # YYYYDOY
-                _ = datetime.datetime.strptime(val, "%Y%j")
-                timevector[idx] = int(val)
-            else:
-                raise ValueError(f"Unrecognized date format: {val}")
+    
+    tv_yyyymmdd, timevector, yr, yrstart, yrend = read_time_vector_data(lines)
 
-    yrstart = int(np.floor(timevector.min() / 1000))
-    yrend = int(np.floor(timevector.max() / 1000))
-    yr = yrend - yrstart + 1
     return timevector, yr, yrstart, yrend
 
 
@@ -83,7 +119,7 @@ def read_file_lists(
             qlist = f.read().splitlines()
         if len(flist) != len(qlist):
             raise ValueError("No. of Data and QA are not consistent")
-        timevector_q, yr_q, yrstart_q, yrend_q = _read_time_vector(tlist, qlist)
+        timevector_q, yr_q, yrstart_q, yrend_q = _read_time_vector("", qlist)
 
         # Check if timevector and timevector_q are the same, otherwise align QA to data timeline
         if not (len(timevector) == len(timevector_q) and np.array_equal(timevector, timevector_q)):
