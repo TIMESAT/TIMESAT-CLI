@@ -7,8 +7,47 @@ import re
 import numpy as np
 import rasterio
 from rasterio.windows import Window
+from pathlib import Path
 
-__all__ = ["read_time_vector_data", "read_file_lists", "open_image_data"]
+__all__ = ["read_input_file_info", "read_time_vector_data", "read_file_lists", "open_image_data"]
+
+
+def read_input_file_info(path_str):
+    """
+    Read basic input file information without loading data.
+
+    Returns:
+        dict with keys:
+            - path (Path)
+            - suffix (str)
+            - input_type (str)
+    Raises:
+        ValueError if path is invalid or unsupported
+    """
+    if not path_str:
+        raise ValueError("Empty path")
+
+    p = Path(path_str).expanduser().resolve()
+
+    if not p.exists():
+        raise ValueError(f"Path not found: {p}")
+
+    suffix = p.suffix.lower()
+
+    if suffix == ".txt":
+        input_type = "imagelist"
+    elif suffix in (".tif", ".tiff"):
+        input_type = "imagestack"
+    elif suffix in (".csv", ".xls", ".xlsx"):
+        input_type = "table"
+    else:
+        raise ValueError(f"Unsupported file type: {suffix}")
+
+    return {
+        "path": p,
+        "suffix": suffix,
+        "input_type": input_type,
+    }
 
 
 def read_time_vector_data(lines):
@@ -216,69 +255,4 @@ def open_image_data(
     return vi, qa, lc
 
 
-# def open_image_data_batched(
-#     x_map: int,
-#     y_map: int,
-#     x: int,
-#     y: int,
-#     data_files: list[str],
-#     qa_files: list[str],
-#     lc_file: str | None,
-#     data_type: str,
-#     p_a,
-#     layer: int,
-#     batch_size: int = 32,
-#     s3_opts: dict | None = None,  # kept for API compatibility, but NOT used
-# ):
-#     """
-#     Read VI, QA, and LC blocks by opening datasets in small batches.
-
-#     IMPORTANT:
-#     - Do NOT use rasterio.Env(AWS_...) in this environment (blocked).
-#     - For S3/S3-compatible, pass presigned HTTPS URLs in data_files/qa_files/lc_file.
-#     """
-
-#     z = len(data_files)
-#     if qa_files and len(qa_files) != z:
-#         raise ValueError(f"qa_files length ({len(qa_files)}) must match data_files length ({z})")
-
-#     vi = np.empty((y, x, z), order="F", dtype=data_type)
-#     qa = np.empty((y, x, z), order="F", dtype=data_type)
-#     lc = np.empty((y, x), order="F", dtype=np.uint8)
-
-#     win = Window(x_map, y_map, x, y)
-#     def _read_stack(paths: list[str], out_arr: np.ndarray, band: int):
-#         for j0 in range(0, z, batch_size):
-#             j1 = min(z, j0 + batch_size)
-#             dss = [rasterio.open(p, "r") for p in paths[j0:j1]]
-#             try:
-#                 for k, ds in enumerate(dss):
-#                     ds.read(band, window=win, out=out_arr[:, :, j0 + k])
-#             finally:
-#                 for ds in dss:
-#                     try:
-#                         ds.close()
-#                     except Exception:
-#                         pass
-
-#     # 1) VI
-#     _read_stack(data_files, vi, band=layer)
-
-#     # 2) QA
-#     if not qa_files:
-#         qa.fill(1)
-#     else:
-#         # QA is usually band 1; change if your QA files differ
-#         _read_stack(qa_files, qa, band=1)
-
-#     # 3) LC
-#     if not lc_file:
-#         lc.fill(1)
-#     else:
-#         with rasterio.open(lc_file, "r") as ds:
-#             ds.read(1, window=win, out=lc)
-#         if lc.dtype != np.uint8:
-#             lc[:] = lc.astype(np.uint8, copy=False)
-
-#     return vi, qa, lc
 
