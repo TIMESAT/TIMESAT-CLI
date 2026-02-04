@@ -10,8 +10,8 @@ def run(jsfile: str) -> None:
     from .config import load_config, build_param_array
     from .readers import read_file_lists, open_image_data
     from .qa import assign_qa_weight
-    from .fsutils import create_output_folders, memory_plan, close_all
-    from .writers import prepare_profiles, write_layers
+    from .fsutils import create_output_folders, memory_plan
+    from .writers import prepare_profiles, write_layers_paths
     from .dateutils import date_with_ignored_day, generate_output_timeseries_dates
 
     VPP_NAMES = ["SOSD","SOSV","LSLOPE","EOSD","EOSV","RSLOPE","LENGTH",
@@ -98,32 +98,24 @@ def run(jsfile: str) -> None:
     outyfitfn, outyfitqafn, outvppfn, outvppqafn, outnsfn = _build_output_filenames(st_folder, vpp_folder, p_outindex, yrstart, yrend, s.p_ignoreday)
 
     img_profile_st, img_profile_vpp, img_profile_qa, img_profile_ns = prepare_profiles(img_profile, s.p_nodata, s.scale, s.offset)
-    # Open output datasets once and reuse them for all blocks
-    st_datasets = []
-    stqa_datasets = []
-    vpp_datasets = []
-    vppqa_datasets = []
-    ns_dataset = []
-
-    # VPP outputs
+    # Create output datasets upfront, then close immediately.
     if s.outputvariables == 1:
         for path in outvppfn:
-            ds = rasterio.open(path, "w", **img_profile_vpp)
-            vpp_datasets.append(ds)
+            with rasterio.open(path, "w", **img_profile_vpp):
+                pass
         for path in outvppqafn:
-            ds = rasterio.open(path, "w", **img_profile_qa)
-            vppqa_datasets.append(ds)
+            with rasterio.open(path, "w", **img_profile_qa):
+                pass
         for path in outnsfn:
-            ds = rasterio.open(path, "w", **img_profile_ns)
-            ns_dataset.append(ds)
+            with rasterio.open(path, "w", **img_profile_ns):
+                pass
 
-    # ST (yfit) outputs
     for path in outyfitfn:
-        ds = rasterio.open(path, "w", **img_profile_st)
-        st_datasets.append(ds)
+        with rasterio.open(path, "w", **img_profile_st):
+            pass
     for path in outyfitqafn:
-        ds = rasterio.open(path, "w", **img_profile_qa)
-        stqa_datasets.append(ds)
+        with rasterio.open(path, "w", **img_profile_qa):
+            pass
 
     
     # compute blocks
@@ -178,41 +170,34 @@ def run(jsfile: str) -> None:
 
         if s.outputvariables == 1:
             vpp  = np.moveaxis(vpp, -1, 0)
-            write_layers(vpp_datasets, vpp, window)
+            write_layers_paths(outvppfn, vpp, window)
 
             vppqa  = np.moveaxis(vppqa, -1, 0)
-            write_layers(vppqa_datasets, vppqa, window)
+            write_layers_paths(outvppqafn, vppqa, window)
 
             nseason  = np.moveaxis(nseason, -1, 0)
-            write_layers(ns_dataset, nseason, window)
+            write_layers_paths(outnsfn, nseason, window)
 
         # Move to (t, y, x)
         yfit = np.moveaxis(yfit, -1, 0)
 
-        nodata_val = img_profile_st.get("nodata", s.p_nodata)
-        yfit = np.nan_to_num(yfit, nan=nodata_val, posinf=nodata_val, neginf=nodata_val)
+        # nodata_val = img_profile_st.get("nodata", s.p_nodata)
+        # try:
+        #     nodata_val = float(nodata_val)
+        # except Exception:
+        #     nodata_val = -9999.0 
+        # nodata_val = np.float32(nodata_val)
+        # yfit = np.nan_to_num(yfit, nan=nodata_val, posinf=nodata_val, neginf=nodata_val)
 
         if s.scale == 1 and s.offset == 0:
             yfit = yfit.astype(img_profile['dtype'])
         else:
             yfit = yfit.astype('float32')
-        write_layers(st_datasets, yfit, window)
+        write_layers_paths(outyfitfn, yfit, window)
 
         yfitqa  = np.moveaxis(yfitqa, -1, 0)
-        write_layers(stqa_datasets, yfitqa, window)
+        write_layers_paths(outyfitqafn, yfitqa, window)
 
         print(f'Block: {iblock + 1}/{num_block}  finishedtime: {datetime.datetime.now()}')
 
-    close_all(
-        st_datasets,
-        stqa_datasets,
-    )
-
-    if s.outputvariables == 1:
-        close_all(
-            vpp_datasets,
-            vppqa_datasets,
-            ns_dataset,
-        )
-
-    
+    # No long-lived dataset handles to close.
