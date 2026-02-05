@@ -131,12 +131,14 @@ def run_single_pixel(
         Daily time steps for the fitted series.
     """
     import timesat
+    from .qa import assign_qa_weight
 
     p_outindex = np.arange(1, nyear * 365 + 1)[::p_outststep]
     p_outindex_num = len(p_outindex)
 
     # Replace NaN values with below-range value
     raw_y = np.nan_to_num(raw_y, nan=p_ylu[0] - 1)
+    raw_w = assign_qa_weight(p_a, raw_w)
 
     lc = np.ones(raw_y.shape[:2], dtype=np.uint8)
     p_nclasses = 1
