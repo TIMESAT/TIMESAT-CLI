@@ -9,7 +9,46 @@ import rasterio
 from rasterio.windows import Window
 from pathlib import Path
 
-__all__ = ["read_input_file_info", "read_time_vector_data", "read_file_lists", "open_image_data"]
+__all__ = [
+    "read_input_file_info",
+    "read_time_vector_data",
+    "read_file_lists",
+    "open_image_data",
+    "strip_band_ref",
+]
+
+_BAND_REF_RE = re.compile(r"^(.*)::band=(\d+)$")
+
+
+def _parse_band_ref(path: str) -> tuple[str, int | None]:
+    """
+    Parse an encoded band reference: "path::band=N".
+    Returns (path, band) where band is 1-based, or (path, None) if not encoded.
+    """
+    m = _BAND_REF_RE.match(path)
+    if not m:
+        return path, None
+    return m.group(1), int(m.group(2))
+
+
+def _encode_band_ref(path: str, band: int) -> str:
+    return f"{path}::band={band}"
+
+
+def strip_band_ref(path: str) -> str:
+    real_path, _ = _parse_band_ref(path)
+    return real_path
+
+def _read_stack_band_names(stack_path: str) -> list[str]:
+    with rasterio.open(stack_path, "r") as ds:
+        names = list(ds.descriptions or [])
+        if not names or all(n is None or str(n).strip() == "" for n in names):
+            # Fallback: try per-band tags, else use generic names
+            names = []
+            for i in range(1, ds.count + 1):
+                tag_name = ds.tags(i).get("BAND_NAME")
+                names.append(tag_name if tag_name else f"band_{i}")
+    return [str(n) for n in names]
 
 
 def read_input_file_info(path_str):
@@ -147,16 +186,48 @@ def read_file_lists(
     tlist: str, data_list: str, qa_list: str
 ) -> tuple[np.ndarray, list[str], list[str], int, int, int]:
     qlist: list[str] | str = ""
-    with open(data_list, "r") as f:
-        flist = f.read().splitlines()
-    timevector, yr, yrstart, yrend = _read_time_vector(tlist, flist)
+
+    data_info = read_input_file_info(data_list)
+
+    if data_info["input_type"] == "imagelist":
+        with open(data_list, "r") as f:
+            flist = f.read().splitlines()
+        timevector, yr, yrstart, yrend = _read_time_vector(tlist, flist)
+    elif data_info["input_type"] == "imagestack":
+        stack_path = str(data_info["path"])
+        band_names = _read_stack_band_names(stack_path)
+        if tlist == "":
+            lines = band_names
+        else:
+            with open(tlist, "r") as f:
+                lines = f.read().splitlines()
+            if len(lines) != len(band_names):
+                raise ValueError(
+                    f"Time vector length ({len(lines)}) does not match number of bands ({len(band_names)})"
+                )
+        _, timevector, yr, yrstart, yrend = read_time_vector_data(lines)
+        flist = [_encode_band_ref(stack_path, i + 1) for i in range(len(band_names))]
+    else:
+        raise ValueError(f"Unsupported input type: {data_info['input_type']}")
 
     if qa_list != "":
-        with open(qa_list, "r") as f:
-            qlist = f.read().splitlines()
-        if len(flist) != len(qlist):
-            raise ValueError("No. of Data and QA are not consistent")
-        timevector_q, yr_q, yrstart_q, yrend_q = _read_time_vector("", qlist)
+        qa_info = read_input_file_info(qa_list)
+
+        if qa_info["input_type"] == "imagelist":
+            with open(qa_list, "r") as f:
+                qlist = f.read().splitlines()
+            if len(flist) != len(qlist):
+                raise ValueError("No. of Data and QA are not consistent")
+            timevector_q, yr_q, yrstart_q, yrend_q = _read_time_vector("", qlist)
+        elif qa_info["input_type"] == "imagestack":
+            qa_stack_path = str(qa_info["path"])
+            qa_band_names = _read_stack_band_names(qa_stack_path)
+            if len(flist) != len(qa_band_names):
+                raise ValueError("No. of Data and QA are not consistent")
+            qlist = [_encode_band_ref(qa_stack_path, i + 1) for i in range(len(qa_band_names))]
+            _, timevector_q, yr_q, yrstart_q, yrend_q = read_time_vector_data(qa_band_names)
+        else:
+            raise ValueError(f"Unsupported QA input type: {qa_info['input_type']}")
 
         # Check if timevector and timevector_q are the same, otherwise align QA to data timeline
         if not (len(timevector) == len(timevector_q) and np.array_equal(timevector, timevector_q)):
@@ -217,8 +288,10 @@ def open_image_data(
     win = Window(x_map, y_map, x, y)
 
     if data_type is None:
-        with rasterio.open(data_files[0], "r") as ds:
-            data_type = np.dtype(ds.dtypes[layer - 1])
+        first_path, first_band = _parse_band_ref(data_files[0])
+        with rasterio.open(first_path, "r") as ds:
+            band = first_band if first_band is not None else layer
+            data_type = np.dtype(ds.dtypes[band - 1])
     else:
         data_type = np.dtype(data_type)
         
@@ -229,18 +302,22 @@ def open_image_data(
 
     # 1) VI: open -> read -> close (per file)
     for i, path in enumerate(data_files):
-        with rasterio.open(path, "r") as ds:
+        real_path, band = _parse_band_ref(path)
+        band_id = band if band is not None else layer
+        with rasterio.open(real_path, "r") as ds:
             # Read returns (y, x) when a single band is selected
-            vi[:, :, i] = ds.read(layer, window=win, out_dtype=vi.dtype)
+            vi[:, :, i] = ds.read(band_id, window=win, out_dtype=vi.dtype)
 
     # 2) QA: open -> read -> close (per file), or fill with ones
     if not qa_files:
         qa.fill(1)
     else:
         for i, path in enumerate(qa_files):
-            with rasterio.open(path, "r") as ds:
+            real_path, band = _parse_band_ref(path)
+            band_id = band if band is not None else 1
+            with rasterio.open(real_path, "r") as ds:
                 # QA is commonly band 1; change if needed
-                qa[:, :, i] = ds.read(1, window=win, out_dtype=qa.dtype)
+                qa[:, :, i] = ds.read(band_id, window=win, out_dtype=qa.dtype)
         print('data read')
 
     # 3) LC: open -> read -> close (once)
@@ -253,6 +330,4 @@ def open_image_data(
             lc[:] = lc.astype(np.uint8, copy=False)
 
     return vi, qa, lc
-
-
 

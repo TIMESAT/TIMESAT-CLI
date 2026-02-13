@@ -8,7 +8,7 @@ def run(jsfile: str) -> None:
     import timesat  # external dependency
 
     from .config import load_config, build_param_array
-    from .readers import read_file_lists, open_image_data
+    from .readers import read_file_lists, open_image_data, strip_band_ref
     from .qa import assign_qa_weight
     from .fsutils import create_output_folders, memory_plan
     from .writers import prepare_profiles, write_layers_paths
@@ -81,7 +81,7 @@ def run(jsfile: str) -> None:
     # batch_size = int(getattr(s, "read_batch_size", 32))  # recommended: 16–32 (S3), 64–128 (local SSD)
 
     # ------load image info---------------
-    with rasterio.open(flist[0], "r") as temp:
+    with rasterio.open(strip_band_ref(flist[0]), "r") as temp:
         img_profile = temp.profile
 
     if sum(s.imwindow) == 0:
