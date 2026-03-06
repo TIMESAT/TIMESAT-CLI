@@ -144,9 +144,12 @@ def read_time_vector_data(lines):
             yyyymmdd_list.append(int(d.strftime("%Y%m%d")))
             yyyydoy_list.append(int(d.strftime("%Y%j")))
 
-    # Use dtype=object to preserve None
-    tv_yyyymmdd = np.array(yyyymmdd_list, order="F", dtype="uint32")
-    tv_yyyydoy = np.array(yyyydoy_list, order="F", dtype="uint32")
+    # Preserve missing values so callers can decide whether to retry with a
+    # different source string (for example, a full path instead of basename).
+    yyyymmdd_dtype = "uint32" if all(v is not None for v in yyyymmdd_list) else object
+    yyyydoy_dtype = "uint32" if all(v is not None for v in yyyydoy_list) else object
+    tv_yyyymmdd = np.array(yyyymmdd_list, order="F", dtype=yyyymmdd_dtype)
+    tv_yyyydoy = np.array(yyyydoy_list, order="F", dtype=yyyydoy_dtype)
 
     # Compute year stats from valid entries only
     valid_years = [v // 10000 for v in tv_yyyymmdd if v is not None]
@@ -165,11 +168,20 @@ def _read_time_vector(tlist: str, filepaths: list[str]):
     """Return (timevector, yr, yrstart, yrend) in YYYYDOY format."""
     flist = [os.path.basename(p) for p in filepaths]
     if tlist == "":
-        lines = flist
+        # Prefer compact names, but fall back to full paths when the basename
+        # does not contain a parseable date and the directory does.
+        tv_yyyymmdd, timevector, yr, yrstart, yrend = read_time_vector_data(flist)
+        if any(v is None for v in tv_yyyymmdd):
+            lines = [
+                filepath if parsed is None else basename
+                for filepath, basename, parsed in zip(filepaths, flist, tv_yyyymmdd)
+            ]
+            tv_yyyymmdd, timevector, yr, yrstart, yrend = read_time_vector_data(lines)
+        return timevector, yr, yrstart, yrend
     else:
         with open(tlist, "r") as f:
             lines = f.read().splitlines()
-    
+
     tv_yyyymmdd, timevector, yr, yrstart, yrend = read_time_vector_data(lines)
 
     return timevector, yr, yrstart, yrend
@@ -330,4 +342,3 @@ def open_image_data(
             lc[:] = lc.astype(np.uint8, copy=False)
 
     return vi, qa, lc
-
