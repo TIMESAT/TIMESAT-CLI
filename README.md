@@ -83,6 +83,12 @@ or equivalently:
 python -m timesat_cli path/to/settings.json
 ```
 
+To migrate a legacy config (`settings` + `class1/class2/...`) to the new grouped schema:
+
+```bash
+timesat-cli migrate-config old_settings.json new_settings.json
+```
+
 ---
 
 ## Advanced Usage
@@ -94,6 +100,79 @@ python timesat_run.py
 ```
 
 The file 'timesat_run.py' contains the full example pipeline that invokes core modules from the 'timesat_cli' package, including configuration loading, file management, TIMESAT processing, and output writing.
+
+---
+
+## Configuration Format
+
+`timesat-cli` only supports grouped JSON:
+
+- `input`: `s3env`, `tv_list`, `image_file_list`, `quality_file_list`, `lc_file`
+- `output`: `outputfolder`, `outputvariables`, `p_st_timestep`, `p_nodata`, `p_hrvppformat`, `vpp_variables`
+- `general`: `imwindow`, `p_band_id`, `p_ignoreday`, `p_ylu`, `p_a`, `p_davailwin`, `p_outlier`, `p_printflag`, `max_memory_gb`, `scale`, `offset`, `classes` (and optional `p_nclasses`)
+
+`vpp_variables` controls which VPP layers are written and how they are named. Each entry supports:
+
+- `source` (required): source TIMESAT variable name, e.g. `SOSD`, `TPROD`
+- `name` (optional): output layer name; defaults to `source`
+- `enabled` (optional): defaults to `true`
+
+`general.classes` is required and must be a non-empty list.
+`general.p_nclasses` is optional; when provided, it must equal `len(general.classes)`.
+
+Example:
+
+```json
+{
+  "input": {
+    "s3env": "",
+    "tv_list": "filelists/time_list.txt",
+    "image_file_list": "filelists/image_files.txt",
+    "quality_file_list": "filelists/qa_files.txt",
+    "lc_file": "landcover.tif"
+  },
+  "output": {
+    "outputfolder": "outputs/",
+    "outputvariables": 1,
+    "p_st_timestep": 1,
+    "p_nodata": -9999,
+    "p_hrvppformat": 1,
+    "vpp_variables": [
+      { "source": "SOSD" },
+      { "source": "TPROD", "name": "TI_PPI" }
+    ]
+  },
+  "general": {
+    "imwindow": [0, 0, 0, 0],
+    "p_band_id": 1,
+    "p_ignoreday": 366,
+    "p_ylu": [0.00001, 2],
+    "p_a": [],
+    "p_davailwin": 45,
+    "p_outlier": 0,
+    "p_printflag": 0,
+    "max_memory_gb": 10,
+    "scale": 1,
+    "offset": 0,
+    "p_nclasses": 1,
+    "classes": [
+      {
+        "landuse": 1,
+        "p_fitmethod": 2,
+        "p_smooth": 1000,
+        "p_nenvi": 1,
+        "p_wfactnum": 1,
+        "p_startmethod": 1,
+        "p_startcutoff": [0.25, 0.15],
+        "p_low_percentile": 0.0,
+        "p_fillbase": 0,
+        "p_seasonmethod": 1,
+        "p_seapar": 1
+      }
+    ]
+  }
+}
+```
 
 ---
 
@@ -112,11 +191,11 @@ If you work with HRVPP quality flags (`QFLAG2`), the following weights `w` are c
 | 6145  | 0.5 |
 | 3073  | 0.5 |
 
-Example (settings.json):
+Grouped-schema example:
 
-```python
-"p_a": {
-  "value": [
+```json
+"general": {
+  "p_a": [
     [1, 1.0],
     [4097, 1.0],
     [8193, 1.0],
@@ -127,7 +206,7 @@ Example (settings.json):
     [6145, 0.5],
     [3073, 0.5]
   ],
-  "description": "QA weighting rules. Leave empty [] to keep original QA values. Use [qa_value, weight] for exact matches or [min, max, weight] for ranges."
+  "classes": [ ... ]
 }
 ```
 
@@ -187,4 +266,3 @@ If you use **TIMESAT**, **TIMESAT-CLI** or **TIMESAT-GUI** in your research, ple
 - This project acknowledges the Swedish National Space Agency (SNSA), the European Environment Agency (EEA), and the European Space Agency (ESA) for their support and for providing access to satellite data and related resources that made this software possible.
 
 ---
-

@@ -13,86 +13,24 @@
     "p_nodata": -9999,
     "p_hrvppformat": 1,
     "vpp_variables": [
-      {
-        "source": "SOSD"
-      },
-      {
-        "source": "SOSV"
-      },
-      {
-        "source": "LSLOPE"
-      },
-      {
-        "source": "EOSD"
-      },
-      {
-        "source": "EOSV"
-      },
-      {
-        "source": "RSLOPE"
-      },
-      {
-        "source": "LENGTH"
-      },
-      {
-        "source": "MINV"
-      },
-      {
-        "source": "MAXD"
-      },
-      {
-        "source": "MAXV"
-      },
-      {
-        "source": "AMPL"
-      },
-      {
-        "source": "TPROD"
-      },
-      {
-        "source": "SPROD"
-      }
+      { "source": "SOSD" },
+      { "source": "EOSD" },
+      { "source": "MAXD" },
+      { "source": "SOSV" },
+      { "source": "EOSV" },
+      { "source": "MINV" },
+      { "source": "MAXV" },
+      { "source": "LSLOPE" },
+      { "source": "RSLOPE" },
+      { "source": "TPROD", "name": "TI_PPI" }
     ]
   },
   "general": {
-    "imwindow": [
-      0,
-      0,
-      50,
-      50
-    ],
+    "imwindow": [0, 0, 50, 50],
     "p_band_id": 1,
     "p_ignoreday": 366,
-    "p_ylu": [
-      0.0,
-      10000.0
-    ],
-    "p_a": [
-      [
-        0,
-        1
-      ],
-      [
-        1,
-        0
-      ],
-      [
-        2,
-        0
-      ],
-      [
-        3,
-        0.5
-      ],
-      [
-        4,
-        0
-      ],
-      [
-        5,
-        0
-      ]
-    ],
+    "p_ylu": [0.0, 10000.0],
+    "p_a": [[0, 1], [1, 0], [2, 0], [3, 0.5], [4, 0], [5, 0]],
     "p_davailwin": 45,
     "p_outlier": 0,
     "p_printflag": 0,
@@ -108,10 +46,7 @@
         "p_nenvi": 1,
         "p_wfactnum": 1,
         "p_startmethod": 1,
-        "p_startcutoff": [
-          0.25,
-          0.15
-        ],
+        "p_startcutoff": [0.25, 0.15],
         "p_low_percentile": 0.05,
         "p_fillbase": 1,
         "p_seasonmethod": 1,

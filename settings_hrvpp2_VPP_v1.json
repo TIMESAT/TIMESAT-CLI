@@ -1,139 +1,122 @@
-{ 
-  "settings": {
-    "s3env": { 
-      "value": ".env" 
-    },
-    "tv_list": {
-      "value": "",
-      "description": "Text file with one date per line. Each date must be either YYYYMMDD (e.g. 20210415) or YYYYDOY (e.g. 2021105). The number of dates must equal the number of image files."
-    },
-    "image_file_list": {
-      "value": "PPIfilelist.txt",
-      "description": "Text file listing full paths to all input raster images (one per line)."
-    },
-    "quality_file_list": {
-      "value": "QAfilelist.txt",
-      "description": "Optional: text file listing full paths to QA rasters (one per line, same length as images). Leave empty string if not used."
-    },
-    "lc_file": {
-      "value": "Landcover.tif",
-      "description": "Optional: land cover GeoTIFF to apply class-specific parameters. Values in the raster should match 'landuse' IDs defined under class blocks. Leave empty string if not used."
-    },
-    "outputfolder": {
-      "value": "XXXXXXXX",
-      "description": "Directory where TIMESAT results will be saved. Subfolders 'ST/' (smoothed time series) and 'VPP/' (phenology parameters) will be created inside."
-    },
-    "imwindow": {
-      "value": [0, 0, 0, 0],
-      "description": "Sub-window to process: [x_offset, y_offset, width, height]. Use [0,0,0,0] for the full image."
-    },
-
-    "p_band_id": {
-      "value": 1,
-      "description": "Band index (1-based) to process from each input image."
-    },
-    "p_ignoreday": {
-      "value": 366,
-      "description": "Day number to ignore in leap years (default: 366 to ignore Dec 31, offseason in the northern hemisphere)."
-    },
-    "p_ylu": {
-      "value": [0.0, 10000.0],
-      "description": "Data range limits [min, max]. Values outside are clipped."
-    },
-    "p_a": {
-      "value": [[0, 1], [1, 0], [2, 0], [3, 0.5], [4, 0], [5, 0]],
-      "description": "QA weighting rules. Leave empty [] to keep original QA values. Use [qa_value, weight] for exact matches or [min, max, weight] for ranges."
-    },
-    "p_st_timestep": {
-      "value": -1,
-      "description": "Output temporal resolution in days. Example: 1 = daily, 8 = 8-day composites."
-    },
-    "p_nodata": {
-      "value": -9999,
-      "description": "NoData value written to output rasters."
-    },
-    "p_davailwin": {
-      "value": 45,
-      "description": "Half-window size of filling baseline if no data found."
-    },
-    "p_outlier": {
-      "value": 0,
-      "description": "Outlier detection flag. 0 = off, 1 = on."
-    },
-    "p_printflag": {
-      "value": 0,
-      "description": "Verbose print flag for TIMESAT internal processing. 0 = silent, 1 = detailed logging."
-    },
-    "max_memory_gb": {
-      "value": 20,
-      "description": "Maximum memory (GB) the program should use. Determines block size."
-    },
-    "scale": {
-      "value": 1,
-      "description": "Optional scaling factor applied to image values before processing. 0 = disabled."
-    },
-    "offset": {
-      "value": 0,
-      "description": "Optional offset added after scaling. 0 = disabled."
-    },
-    "p_hrvppformat": {
-      "value": 1,
-      "description": "Output format. 1 = YYYYDOY. 0 = TIMESAT sequential numbering."
-    },
-    "p_nclasses": {
-      "value": 1,
-      "description": "Number of land cover classes defined below (class1, class2, ...)."
-    },
-    "outputvariables": {
-      "value": 0,
-      "description": "Output vpp switch. 1 = on (both ST and VPP), 0 = off (only ST)."
-    }
+{
+  "input": {
+    "s3env": ".env",
+    "tv_list": "",
+    "image_file_list": "PPIfilelist.txt",
+    "quality_file_list": "QAfilelist.txt",
+    "lc_file": "Landcover.tif"
   },
-
-  "class1": {
-    "landuse": {
-      "value": 1,
-      "description": "Land cover ID for this class (must match values in lc_file)."
-    },
-    "p_fitmethod": {
-      "value": 2,
-      "description": "Fitting method: 1 = double logistic, 2 = smoothing spline."
-    },
-    "p_smooth": {
-      "value": 10000,
-      "description": "Smoothing parameter for spline. Larger = smoother curves."
-    },
-    "p_nenvi": {
-      "value": 1,
-      "description": "Number of upper envelope iterations (1 = none, 2 = one iteration)."
-    },
-    "p_wfactnum": {
-      "value": 1,
-      "description": "Adaptation strength factor for fitting."
-    },
-    "p_startmethod": {
-      "value": 1,
-      "description": "Season start detection method (e.g. 1 = amplitude method)."
-    },
-    "p_startcutoff": {
-      "value": [0.35, 0.15],
-      "description": "Cutoff thresholds for season start detection."
-    },
-    "p_low_percentile": {
-      "value": 0.05,
-      "description": "Percentile threshold for baseline level definition."
-    },
-    "p_fillbase": {
-      "value": 1,
-      "description": "Fill gaps with baseline flag. 0 = off, 1 = on."
-    },
-    "p_seasonmethod": {
-      "value": 1,
-      "description": "Season detection method: 1 = spline-based, 2 = sinusoidal."
-    },
-    "p_seapar": {
-      "value": 0.5,
-      "description": "Season detection parameter. 1 = single season/year, 2 = allow multiple seasons."
-    }
+  "output": {
+    "outputfolder": "XXXXXXXX",
+    "outputvariables": 0,
+    "p_st_timestep": -1,
+    "p_nodata": -9999,
+    "p_hrvppformat": 1,
+    "vpp_variables": [
+      {
+        "source": "SOSD"
+      },
+      {
+        "source": "SOSV"
+      },
+      {
+        "source": "LSLOPE"
+      },
+      {
+        "source": "EOSD"
+      },
+      {
+        "source": "EOSV"
+      },
+      {
+        "source": "RSLOPE"
+      },
+      {
+        "source": "LENGTH"
+      },
+      {
+        "source": "MINV"
+      },
+      {
+        "source": "MAXD"
+      },
+      {
+        "source": "MAXV"
+      },
+      {
+        "source": "AMPL"
+      },
+      {
+        "source": "TPROD"
+      },
+      {
+        "source": "SPROD"
+      }
+    ]
+  },
+  "general": {
+    "imwindow": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "p_band_id": 1,
+    "p_ignoreday": 366,
+    "p_ylu": [
+      0.0,
+      10000.0
+    ],
+    "p_a": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        2,
+        0
+      ],
+      [
+        3,
+        0.5
+      ],
+      [
+        4,
+        0
+      ],
+      [
+        5,
+        0
+      ]
+    ],
+    "p_davailwin": 45,
+    "p_outlier": 0,
+    "p_printflag": 0,
+    "max_memory_gb": 20,
+    "scale": 1,
+    "offset": 0,
+    "p_nclasses": 1,
+    "classes": [
+      {
+        "landuse": 1,
+        "p_fitmethod": 2,
+        "p_smooth": 10000,
+        "p_nenvi": 1,
+        "p_wfactnum": 1,
+        "p_startmethod": 1,
+        "p_startcutoff": [
+          0.35,
+          0.15
+        ],
+        "p_low_percentile": 0.05,
+        "p_fillbase": 1,
+        "p_seasonmethod": 1,
+        "p_seapar": 0.5
+      }
+    ]
   }
 }

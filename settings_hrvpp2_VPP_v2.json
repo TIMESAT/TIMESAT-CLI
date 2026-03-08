@@ -1,0 +1,57 @@
+{
+  "input": {
+    "s3env": ".env",
+    "tv_list": "",
+    "image_file_list": "PPIfilelist.txt",
+    "quality_file_list": "QAfilelist.txt",
+    "lc_file": "Landcover.tif"
+  },
+  "output": {
+    "outputfolder": "XXXXXXXX",
+    "outputvariables": 0,
+    "p_st_timestep": -1,
+    "p_nodata": -9999,
+    "p_hrvppformat": 1,
+    "vpp_variables": [
+      { "source": "SOSD" },
+      { "source": "EOSD" },
+      { "source": "MAXD" },
+      { "source": "SOSV" },
+      { "source": "EOSV" },
+      { "source": "MINV" },
+      { "source": "MAXV" },
+      { "source": "LSLOPE" },
+      { "source": "RSLOPE" },
+      { "source": "TPROD", "name": "TI_PPI" }
+    ]
+  },
+  "general": {
+    "imwindow": [0, 0, 0, 0],
+    "p_band_id": 1,
+    "p_ignoreday": 366,
+    "p_ylu": [0.0, 10000.0],
+    "p_a": [[0, 50, 1]],
+    "p_davailwin": 45,
+    "p_outlier": 0,
+    "p_printflag": 0,
+    "max_memory_gb": 20,
+    "scale": 1,
+    "offset": 0,
+    "p_nclasses": 1,
+    "classes": [
+      {
+        "landuse": 1,
+        "p_fitmethod": 2,
+        "p_smooth": 10000,
+        "p_nenvi": 1,
+        "p_wfactnum": 1,
+        "p_startmethod": 1,
+        "p_startcutoff": [0.35, 0.15],
+        "p_low_percentile": 0.05,
+        "p_fillbase": 1,
+        "p_seasonmethod": 1,
+        "p_seapar": 0.5
+      }
+    ]
+  }
+}

@@ -13,11 +13,21 @@ def run(jsfile: str) -> None:
     from .fsutils import create_output_folders, memory_plan
     from .writers import prepare_profiles, write_layers_paths
     from .dateutils import date_with_ignored_day, generate_output_timeseries_dates
+    from .vpp_layout import (
+        TIMESAT_VPP_NAMES,
+        build_vpp_output_filenames,
+        select_vpp_layers,
+    )
 
-    VPP_NAMES = ["SOSD","SOSV","LSLOPE","EOSD","EOSV","RSLOPE","LENGTH",
-                 "MINV","MAXD","MAXV","AMPL","TPROD","SPROD"]
-
-    def _build_output_filenames(st_folder: str, vpp_folder: str, p_outindex, yrstart: int, yrend: int, p_ignoreday: int):
+    def _build_output_filenames(
+        st_folder: str,
+        vpp_folder: str,
+        p_outindex,
+        yrstart: int,
+        yrend: int,
+        p_ignoreday: int,
+        vpp_output_names,
+    ):
         outyfitfn = []
         outyfitqafn = []
         for i_tv in p_outindex:
@@ -25,15 +35,12 @@ def run(jsfile: str) -> None:
             outyfitfn.append(os.path.join(st_folder, f"TIMESAT_{yfitdate.strftime('%Y%m%d')}.tif"))
             outyfitqafn.append(os.path.join(st_folder, f"TIMESAT_{yfitdate.strftime('%Y%m%d')}_QA.tif"))
 
-        outvppfn = []
-        outvppqafn = []
-        outnsfn = []
-        for i_yr in range(yrstart, yrend + 1):
-            for i_seas in range(2):
-                for name in VPP_NAMES:
-                    outvppfn.append(os.path.join(vpp_folder, f"TIMESAT_{name}_{i_yr}_season_{i_seas+1}.tif"))
-                outvppqafn.append(os.path.join(vpp_folder, f"TIMESAT_QA_{i_yr}_season_{i_seas+1}.tif"))
-            outnsfn.append(os.path.join(vpp_folder, f"TIMESAT_{i_yr}_numseason.tif"))
+        outvppfn, outvppqafn, outnsfn = build_vpp_output_filenames(
+            vpp_folder=vpp_folder,
+            yrstart=yrstart,
+            yrend=yrend,
+            variable_names=vpp_output_names,
+        )
         return outyfitfn, outyfitqafn, outvppfn, outvppqafn, outnsfn
 
 
@@ -92,10 +99,26 @@ def run(jsfile: str) -> None:
 
     # ------output-----------------
     st_folder, vpp_folder = create_output_folders(s.outputfolder)
+    selected_vpp_sources = [v.source for v in s.vpp_variables]
+    selected_vpp_output_names = [v.name for v in s.vpp_variables]
+    if s.outputvariables == 1:
+        source_to_output = ", ".join(
+            f"{src}->{dst}" if src != dst else src
+            for src, dst in zip(selected_vpp_sources, selected_vpp_output_names)
+        )
+        print(f"Selected VPP variables: {source_to_output}")
 
     p_outindex, p_outindex_num = generate_output_timeseries_dates(s.p_st_timestep, yr, yrstart)
 
-    outyfitfn, outyfitqafn, outvppfn, outvppqafn, outnsfn = _build_output_filenames(st_folder, vpp_folder, p_outindex, yrstart, yrend, s.p_ignoreday)
+    outyfitfn, outyfitqafn, outvppfn, outvppqafn, outnsfn = _build_output_filenames(
+        st_folder,
+        vpp_folder,
+        p_outindex,
+        yrstart,
+        yrend,
+        s.p_ignoreday,
+        selected_vpp_output_names,
+    )
 
     img_profile_st, img_profile_vpp, img_profile_qa, img_profile_ns = prepare_profiles(img_profile, s.p_nodata, s.scale, s.offset)
     # Create output datasets upfront, then close immediately.
@@ -170,6 +193,11 @@ def run(jsfile: str) -> None:
 
         if s.outputvariables == 1:
             vpp  = np.moveaxis(vpp, -1, 0)
+            vpp = select_vpp_layers(
+                vpp,
+                src_names=TIMESAT_VPP_NAMES,
+                dst_names=selected_vpp_sources,
+            )
             write_layers_paths(outvppfn, vpp, window)
 
             vppqa  = np.moveaxis(vppqa, -1, 0)
