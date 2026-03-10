@@ -33,6 +33,7 @@ def build_vpp_output_filenames(
     yrstart: int,
     yrend: int,
     variable_names: Sequence[str],
+    prefix: str = "TIMESAT",
     seasons_per_year: int = 2,
 ) -> tuple[list[str], list[str], list[str]]:
     outvppfn: list[str] = []
@@ -43,12 +44,12 @@ def build_vpp_output_filenames(
         for season in range(1, seasons_per_year + 1):
             for name in variable_names:
                 outvppfn.append(
-                    os.path.join(vpp_folder, f"TIMESAT_{name}_{year}_season_{season}.tif")
+                    os.path.join(vpp_folder, f"{prefix}_{name}_{year}_season_{season}.tif")
                 )
             outvppqafn.append(
-                os.path.join(vpp_folder, f"TIMESAT_QA_{year}_season_{season}.tif")
+                os.path.join(vpp_folder, f"{prefix}_QA_{year}_season_{season}.tif")
             )
-        outnsfn.append(os.path.join(vpp_folder, f"TIMESAT_{year}_numseason.tif"))
+        outnsfn.append(os.path.join(vpp_folder, f"{prefix}_{year}_numseason.tif"))
 
     return outvppfn, outvppqafn, outnsfn
 

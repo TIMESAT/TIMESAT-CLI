@@ -9,6 +9,7 @@ from timesat_cli.config import (
     load_config_data,
     migrate_legacy_config_data,
 )
+from timesat_cli.vpp_layout import build_vpp_output_filenames
 
 
 def _grouped_config() -> dict:
@@ -26,6 +27,8 @@ def _grouped_config() -> dict:
             "p_st_timestep": 1,
             "p_nodata": -9999,
             "p_hrvppformat": 1,
+            "yfit_prefix": "TIMESAT",
+            "vpp_prefix": "TIMESAT",
             "vpp_variables": [{"source": "SOSD"}, {"source": "TPROD", "name": "TI_PPI"}],
         },
         "general": {
@@ -67,6 +70,18 @@ class ConfigSchemaTests(unittest.TestCase):
         self.assertEqual(s.p_nclasses, 1)
         self.assertEqual(len(s.classes), 1)
         self.assertEqual(s.vpp_variables[1].name, "TI_PPI")
+        self.assertEqual(s.yfit_prefix, "TIMESAT")
+        self.assertEqual(s.vpp_prefix, "TIMESAT")
+
+    def test_output_prefixes_are_configurable(self):
+        cfg_data = _grouped_config()
+        cfg_data["output"]["yfit_prefix"] = "YFIT"
+        cfg_data["output"]["vpp_prefix"] = "VPP"
+
+        cfg = load_config_data(cfg_data)
+
+        self.assertEqual(cfg.settings.yfit_prefix, "YFIT")
+        self.assertEqual(cfg.settings.vpp_prefix, "VPP")
 
     def test_legacy_schema_is_rejected_with_migration_hint(self):
         legacy = {
@@ -108,6 +123,8 @@ class ConfigSchemaTests(unittest.TestCase):
         self.assertEqual(len(grouped["general"]["classes"]), 1)
         self.assertEqual(grouped["general"]["classes"][0]["landuse"], 7)
         self.assertEqual(grouped["output"]["vpp_variables"][-1]["name"], "TI_PPI")
+        self.assertEqual(grouped["output"]["yfit_prefix"], "TIMESAT")
+        self.assertEqual(grouped["output"]["vpp_prefix"], "TIMESAT")
 
     def test_p_nclasses_must_match_classes_length(self):
         cfg = _grouped_config()
@@ -143,6 +160,19 @@ class ConfigSchemaTests(unittest.TestCase):
             path = f.name
         loaded = load_config(path)
         self.assertEqual(loaded.settings.outputfolder, "out")
+
+    def test_vpp_output_filenames_use_custom_prefix(self):
+        outvppfn, outvppqafn, outnsfn = build_vpp_output_filenames(
+            vpp_folder="out",
+            yrstart=2020,
+            yrend=2020,
+            variable_names=["SOSD"],
+            prefix="VPP",
+        )
+
+        self.assertEqual(outvppfn, ["out/VPP_SOSD_2020_season_1.tif", "out/VPP_SOSD_2020_season_2.tif"])
+        self.assertEqual(outvppqafn, ["out/VPP_QA_2020_season_1.tif", "out/VPP_QA_2020_season_2.tif"])
+        self.assertEqual(outnsfn, ["out/VPP_2020_numseason.tif"])
 
 
 if __name__ == "__main__":

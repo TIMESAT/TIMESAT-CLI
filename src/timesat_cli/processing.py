@@ -26,20 +26,23 @@ def run(jsfile: str) -> None:
         yrstart: int,
         yrend: int,
         p_ignoreday: int,
+        yfit_prefix: str,
+        vpp_prefix: str,
         vpp_output_names,
     ):
         outyfitfn = []
         outyfitqafn = []
         for i_tv in p_outindex:
             yfitdate = date_with_ignored_day(yrstart, int(i_tv), p_ignoreday)
-            outyfitfn.append(os.path.join(st_folder, f"TIMESAT_{yfitdate.strftime('%Y%m%d')}.tif"))
-            outyfitqafn.append(os.path.join(st_folder, f"TIMESAT_{yfitdate.strftime('%Y%m%d')}_QA.tif"))
+            outyfitfn.append(os.path.join(st_folder, f"{yfit_prefix}_{yfitdate.strftime('%Y%m%d')}.tif"))
+            outyfitqafn.append(os.path.join(st_folder, f"{yfit_prefix}_{yfitdate.strftime('%Y%m%d')}_QA.tif"))
 
         outvppfn, outvppqafn, outnsfn = build_vpp_output_filenames(
             vpp_folder=vpp_folder,
             yrstart=yrstart,
             yrend=yrend,
             variable_names=vpp_output_names,
+            prefix=vpp_prefix,
         )
         return outyfitfn, outyfitqafn, outvppfn, outvppqafn, outnsfn
 
@@ -117,6 +120,8 @@ def run(jsfile: str) -> None:
         yrstart,
         yrend,
         s.p_ignoreday,
+        s.yfit_prefix,
+        s.vpp_prefix,
         selected_vpp_output_names,
     )
 

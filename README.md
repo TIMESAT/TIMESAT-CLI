@@ -108,7 +108,7 @@ The file 'timesat_run.py' contains the full example pipeline that invokes core m
 `timesat-cli` only supports grouped JSON:
 
 - `input`: `s3env`, `tv_list`, `image_file_list`, `quality_file_list`, `lc_file`
-- `output`: `outputfolder`, `outputvariables`, `p_st_timestep`, `p_nodata`, `p_hrvppformat`, `vpp_variables`
+- `output`: `outputfolder`, `outputvariables`, `p_st_timestep`, `p_nodata`, `p_hrvppformat`, `yfit_prefix`, `vpp_prefix`, `vpp_variables`
 - `general`: `imwindow`, `p_band_id`, `p_ignoreday`, `p_ylu`, `p_a`, `p_davailwin`, `p_outlier`, `p_printflag`, `max_memory_gb`, `scale`, `offset`, `classes` (and optional `p_nclasses`)
 
 `vpp_variables` controls which VPP layers are written and how they are named. Each entry supports:
@@ -116,6 +116,13 @@ The file 'timesat_run.py' contains the full example pipeline that invokes core m
 - `source` (required): source TIMESAT variable name, e.g. `SOSD`, `TPROD`
 - `name` (optional): output layer name; defaults to `source`
 - `enabled` (optional): defaults to `true`
+
+`yfit_prefix` and `vpp_prefix` control the filename prefix independently:
+
+- yfit: `<yfit_prefix>_<YYYYMMDD>.tif` and `<yfit_prefix>_<YYYYMMDD>_QA.tif`
+- VPP: `<vpp_prefix>_<Output Name>_<year>_season_<n>.tif`
+- VPP QA: `<vpp_prefix>_QA_<year>_season_<n>.tif`
+- season count: `<vpp_prefix>_<year>_numseason.tif`
 
 `general.classes` is required and must be a non-empty list.
 `general.p_nclasses` is optional; when provided, it must equal `len(general.classes)`.
@@ -137,6 +144,8 @@ Example:
     "p_st_timestep": 1,
     "p_nodata": -9999,
     "p_hrvppformat": 1,
+    "yfit_prefix": "TIMESAT",
+    "vpp_prefix": "TIMESAT",
     "vpp_variables": [
       { "source": "SOSD" },
       { "source": "TPROD", "name": "TI_PPI" }

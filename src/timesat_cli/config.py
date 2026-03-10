@@ -30,6 +30,8 @@ DEFAULT_OUTPUT = {
     "p_st_timestep": -1,
     "p_nodata": -9999,
     "p_hrvppformat": 1,
+    "yfit_prefix": "TIMESAT",
+    "vpp_prefix": "TIMESAT",
     "vpp_variables": [{"source": name} for name in TIMESAT_VPP_NAMES],
 }
 
@@ -108,6 +110,8 @@ class Settings:
     scale: float
     offset: float
     p_hrvppformat: int
+    yfit_prefix: str
+    vpp_prefix: str
     p_nclasses: int
     classes: List[ClassParams]
     outputvariables: int
@@ -345,6 +349,8 @@ def load_config_data(data: dict[str, Any]) -> Config:
         scale=_as_number(_get_optional(general_cfg, "scale", DEFAULT_GENERAL["scale"]), "general.scale"),
         offset=_as_number(_get_optional(general_cfg, "offset", DEFAULT_GENERAL["offset"]), "general.offset"),
         p_hrvppformat=_as_int(_get_optional(output_cfg, "p_hrvppformat", DEFAULT_OUTPUT["p_hrvppformat"]), "output.p_hrvppformat"),
+        yfit_prefix=_as_string(_get_optional(output_cfg, "yfit_prefix", DEFAULT_OUTPUT["yfit_prefix"]), "output.yfit_prefix"),
+        vpp_prefix=_as_string(_get_optional(output_cfg, "vpp_prefix", DEFAULT_OUTPUT["vpp_prefix"]), "output.vpp_prefix"),
         outputvariables=_as_int(_get_optional(output_cfg, "outputvariables", DEFAULT_OUTPUT["outputvariables"]), "output.outputvariables"),
         p_nclasses=p_nclasses,
         classes=classes,
@@ -426,6 +432,8 @@ def migrate_legacy_config_data(data: dict[str, Any]) -> dict[str, Any]:
             "p_st_timestep": _legacy_get(legacy_settings, "p_st_timestep", DEFAULT_OUTPUT["p_st_timestep"]),
             "p_nodata": _legacy_get(legacy_settings, "p_nodata", DEFAULT_OUTPUT["p_nodata"]),
             "p_hrvppformat": _legacy_get(legacy_settings, "p_hrvppformat", DEFAULT_OUTPUT["p_hrvppformat"]),
+            "yfit_prefix": DEFAULT_OUTPUT["yfit_prefix"],
+            "vpp_prefix": DEFAULT_OUTPUT["vpp_prefix"],
             "vpp_variables": DEFAULT_OUTPUT["vpp_variables"],
         },
         "general": {
