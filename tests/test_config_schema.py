@@ -9,7 +9,15 @@ from timesat_cli.config import (
     load_config_data,
     migrate_legacy_config_data,
 )
-from timesat_cli.vpp_layout import build_vpp_output_filenames
+from timesat_cli.vpp_layout import (
+    TIMESAT_VPP_NAMES,
+    build_vpp_layer_transform_info,
+    build_vpp_output_filenames,
+    build_vpp_season_years,
+    convert_date_vpp_layers_to_layer_doy,
+)
+
+import numpy as np
 
 
 def _grouped_config() -> dict:
@@ -199,6 +207,94 @@ class ConfigSchemaTests(unittest.TestCase):
         self.assertEqual(outvppfn, ["out/VPP_SOSD_2020_season_1.tif", "out/VPP_SOSD_2020_season_2.tif"])
         self.assertEqual(outvppqafn, ["out/VPP_QA_2020_season_1.tif", "out/VPP_QA_2020_season_2.tif"])
         self.assertEqual(outnsfn, ["out/VPP_2020_numseason.tif"])
+
+    def test_build_vpp_season_years_matches_filename_order(self):
+        self.assertEqual(build_vpp_season_years(2020, 2021), [2020, 2020, 2021, 2021])
+
+    def test_build_vpp_layer_transform_info_matches_source_order(self):
+        layer_years, date_indices, scaled_indices = build_vpp_layer_transform_info(2020, 2020)
+        self.assertEqual(date_indices, [0, 3, 8])
+        self.assertEqual(scaled_indices, [11, 12])
+        self.assertTrue(np.array_equal(layer_years, np.array([2020.0] * 6)))
+
+    def test_date_vpp_layers_are_converted_to_layer_relative_doy(self):
+        vpp_layers = np.zeros((len(TIMESAT_VPP_NAMES) * 4, 1, 1), dtype=np.float32)
+
+        def set_layer(season_i: int, name: str, value: float) -> None:
+            layer_idx = season_i * len(TIMESAT_VPP_NAMES) + TIMESAT_VPP_NAMES.index(name)
+            vpp_layers[layer_idx, 0, 0] = value
+
+        set_layer(0, "SOSD", 2020010)
+        set_layer(1, "EOSD", 2020360)
+        set_layer(2, "MAXD", 2021005)
+        set_layer(3, "SOSD", 2021360)
+
+        layer_years, date_indices, scaled_indices = build_vpp_layer_transform_info(2020, 2021)
+        converted = convert_date_vpp_layers_to_layer_doy(
+            vpp_layers, layer_years, date_indices, scaled_indices, p_nodata=-9999
+        )
+
+        self.assertEqual(converted[TIMESAT_VPP_NAMES.index("SOSD"), 0, 0], 10)
+        self.assertEqual(converted[len(TIMESAT_VPP_NAMES) + TIMESAT_VPP_NAMES.index("EOSD"), 0, 0], 360)
+        self.assertEqual(converted[2 * len(TIMESAT_VPP_NAMES) + TIMESAT_VPP_NAMES.index("MAXD"), 0, 0], 5)
+        self.assertEqual(converted[3 * len(TIMESAT_VPP_NAMES) + TIMESAT_VPP_NAMES.index("SOSD"), 0, 0], 360)
+
+    def test_date_vpp_layers_keep_cross_year_offset_with_layer_year(self):
+        vpp_layers = np.zeros((len(TIMESAT_VPP_NAMES) * 2, 1, 1), dtype=np.float32)
+        season2_sosd = len(TIMESAT_VPP_NAMES) + TIMESAT_VPP_NAMES.index("SOSD")
+        vpp_layers[season2_sosd, 0, 0] = 2019360
+
+        layer_years, date_indices, scaled_indices = build_vpp_layer_transform_info(2020, 2020)
+        converted = convert_date_vpp_layers_to_layer_doy(
+            vpp_layers, layer_years, date_indices, scaled_indices, p_nodata=-9999
+        )
+
+        self.assertEqual(converted[season2_sosd, 0, 0], -5)
+
+    def test_date_vpp_layers_skip_nodata_and_non_yyyydoy_values(self):
+        vpp_layers = np.zeros((len(TIMESAT_VPP_NAMES) * 2, 1, 3), dtype=np.float32)
+        sosd = TIMESAT_VPP_NAMES.index("SOSD")
+        vpp_layers[sosd, 0, 0] = -9999
+        vpp_layers[sosd, 0, 1] = 123
+        vpp_layers[sosd, 0, 2] = 2020123
+
+        layer_years, date_indices, scaled_indices = build_vpp_layer_transform_info(2020, 2020)
+        converted = convert_date_vpp_layers_to_layer_doy(
+            vpp_layers, layer_years, date_indices, scaled_indices, p_nodata=-9999
+        )
+
+        self.assertEqual(converted[sosd, 0, 0], -9999)
+        self.assertEqual(converted[sosd, 0, 1], 123)
+        self.assertEqual(converted[sosd, 0, 2], 123)
+
+    def test_date_vpp_layers_support_fractional_doy(self):
+        vpp_layers = np.zeros((len(TIMESAT_VPP_NAMES) * 2, 1, 1), dtype=np.float32)
+        sosd = len(TIMESAT_VPP_NAMES) + TIMESAT_VPP_NAMES.index("SOSD")
+        vpp_layers[sosd, 0, 0] = 2016120.5
+
+        layer_years, date_indices, scaled_indices = build_vpp_layer_transform_info(2020, 2020)
+        converted = convert_date_vpp_layers_to_layer_doy(
+            vpp_layers, layer_years, date_indices, scaled_indices, p_nodata=-9999
+        )
+
+        self.assertEqual(converted[sosd, 0, 0], -1339.5)
+
+    def test_product_vpp_layers_are_scaled_by_one_thousand(self):
+        vpp_layers = np.zeros((len(TIMESAT_VPP_NAMES) * 2, 1, 2), dtype=np.float32)
+        tprod = TIMESAT_VPP_NAMES.index("TPROD")
+        sprod = len(TIMESAT_VPP_NAMES) + TIMESAT_VPP_NAMES.index("SPROD")
+        vpp_layers[tprod, 0, 0] = 2500
+        vpp_layers[tprod, 0, 1] = -9999
+        vpp_layers[sprod, 0, 0] = 1250
+
+        layer_years, date_indices, scaled_indices = build_vpp_layer_transform_info(2020, 2020)
+        converted = convert_date_vpp_layers_to_layer_doy(
+            vpp_layers, layer_years, date_indices, scaled_indices, p_nodata=-9999
+        )
+
+        self.assertEqual(converted[tprod, 0, 0], 2.5)
+        self.assertEqual(converted[tprod, 0, 1], -9999)
+        self.assertEqual(converted[sprod, 0, 0], 1.25)
 
 
 if __name__ == "__main__":

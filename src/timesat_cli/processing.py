@@ -15,7 +15,9 @@ def run(jsfile: str) -> None:
     from .dateutils import date_with_ignored_day, generate_output_timeseries_dates
     from .vpp_layout import (
         TIMESAT_VPP_NAMES,
+        build_vpp_layer_transform_info,
         build_vpp_output_filenames,
+        convert_date_vpp_layers_to_layer_doy,
         select_vpp_layers,
     )
 
@@ -112,6 +114,15 @@ def run(jsfile: str) -> None:
         print(f"Selected VPP variables: {source_to_output}")
 
     p_outindex, p_outindex_num = generate_output_timeseries_dates(s.p_st_timestep, yr, yrstart)
+    date_layer_years = None
+    date_layer_indices = None
+    scaled_layer_indices = None
+    if s.outputvariables == 1 and s.p_hrvppformat == 1:
+        date_layer_years, date_layer_indices, scaled_layer_indices = build_vpp_layer_transform_info(
+            yrstart,
+            yrend,
+            src_names=TIMESAT_VPP_NAMES,
+        )
 
     outyfitfn, outyfitqafn, outvppfn, outvppqafn, outnsfn = _build_output_filenames(
         st_folder,
@@ -204,6 +215,15 @@ def run(jsfile: str) -> None:
 
         if s.outputvariables == 1:
             vpp  = np.moveaxis(vpp, -1, 0)
+            if s.p_hrvppformat == 1:
+                vpp = convert_date_vpp_layers_to_layer_doy(
+                    vpp,
+                    date_layer_years,
+                    date_layer_indices,
+                    scaled_layer_indices,
+                    p_nodata=s.p_nodata,
+                    src_names=TIMESAT_VPP_NAMES,
+                )
             vpp = select_vpp_layers(
                 vpp,
                 src_names=TIMESAT_VPP_NAMES,
