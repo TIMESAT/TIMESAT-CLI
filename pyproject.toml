@@ -30,7 +30,7 @@ dependencies = [
   "pandas",
   "python-dotenv",
   "boto3",
-  "timesat>=4.2.1,<4.3",
+  "timesat>=4.3.1,<4.4",
 ]
 
 [dependency-groups]
