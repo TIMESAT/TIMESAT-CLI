@@ -14,6 +14,15 @@ from .vpp_layout import TIMESAT_VPP_NAMES
 ALLOWED_TOP_LEVEL_KEYS = {"input", "output", "general", "metadata"}
 LEGACY_MIGRATION_HINT = "timesat-cli migrate-config <old.json> <new.json>"
 LEGACY_CLASS_KEY_PATTERN = re.compile(r"^class\d+$")
+ALLOWED_VPP_DTYPES = {
+    "uint8",
+    "uint16",
+    "int16",
+    "uint32",
+    "int32",
+    "float32",
+    "float64",
+}
 
 # Centralized defaults for grouped schema and migration.
 DEFAULT_INPUT = {
@@ -30,6 +39,7 @@ DEFAULT_OUTPUT = {
     "p_st_timestep": -1,
     "p_nodata": -9999,
     "p_hrvppformat": 1,
+    "vpp_dtype": "float32",
     "yfit_prefix": "TIMESAT",
     "vpp_prefix": "TIMESAT",
     "vpp_variables": [{"source": name} for name in TIMESAT_VPP_NAMES],
@@ -110,6 +120,7 @@ class Settings:
     scale: float
     offset: float
     p_hrvppformat: int
+    vpp_dtype: str
     yfit_prefix: str
     vpp_prefix: str
     p_nclasses: int
@@ -205,6 +216,14 @@ def _as_string(value: Any, path: str) -> str:
     if not isinstance(value, str):
         raise ConfigError(f"'{path}' must be a string.")
     return value
+
+
+def _as_vpp_dtype(value: Any, path: str) -> str:
+    dtype = _as_string(value, path).strip().lower()
+    if dtype not in ALLOWED_VPP_DTYPES:
+        allowed = ", ".join(sorted(ALLOWED_VPP_DTYPES))
+        raise ConfigError(f"'{path}' must be one of: {allowed}.")
+    return dtype
 
 
 def _as_list(value: Any, path: str) -> list[Any]:
@@ -349,6 +368,7 @@ def load_config_data(data: dict[str, Any]) -> Config:
         scale=_as_number(_get_optional(general_cfg, "scale", DEFAULT_GENERAL["scale"]), "general.scale"),
         offset=_as_number(_get_optional(general_cfg, "offset", DEFAULT_GENERAL["offset"]), "general.offset"),
         p_hrvppformat=_as_int(_get_optional(output_cfg, "p_hrvppformat", DEFAULT_OUTPUT["p_hrvppformat"]), "output.p_hrvppformat"),
+        vpp_dtype=_as_vpp_dtype(_get_optional(output_cfg, "vpp_dtype", DEFAULT_OUTPUT["vpp_dtype"]), "output.vpp_dtype"),
         yfit_prefix=_as_string(_get_optional(output_cfg, "yfit_prefix", DEFAULT_OUTPUT["yfit_prefix"]), "output.yfit_prefix"),
         vpp_prefix=_as_string(_get_optional(output_cfg, "vpp_prefix", DEFAULT_OUTPUT["vpp_prefix"]), "output.vpp_prefix"),
         outputvariables=_as_int(_get_optional(output_cfg, "outputvariables", DEFAULT_OUTPUT["outputvariables"]), "output.outputvariables"),
@@ -432,6 +452,7 @@ def migrate_legacy_config_data(data: dict[str, Any]) -> dict[str, Any]:
             "p_st_timestep": _legacy_get(legacy_settings, "p_st_timestep", DEFAULT_OUTPUT["p_st_timestep"]),
             "p_nodata": _legacy_get(legacy_settings, "p_nodata", DEFAULT_OUTPUT["p_nodata"]),
             "p_hrvppformat": _legacy_get(legacy_settings, "p_hrvppformat", DEFAULT_OUTPUT["p_hrvppformat"]),
+            "vpp_dtype": DEFAULT_OUTPUT["vpp_dtype"],
             "yfit_prefix": DEFAULT_OUTPUT["yfit_prefix"],
             "vpp_prefix": DEFAULT_OUTPUT["vpp_prefix"],
             "vpp_variables": DEFAULT_OUTPUT["vpp_variables"],

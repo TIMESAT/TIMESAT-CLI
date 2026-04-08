@@ -29,6 +29,7 @@
     "p_st_timestep": -1,
     "p_nodata": -9999,
     "p_hrvppformat": 1,
+    "vpp_dtype": "int16",
     "vpp_variables": [
       { "source": "SOSD" },
       { "source": "EOSD" },

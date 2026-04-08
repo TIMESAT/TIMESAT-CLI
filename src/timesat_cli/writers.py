@@ -10,14 +10,14 @@ from rasterio.windows import Window
 __all__ = ["prepare_profiles", "write_layers", "write_layers_paths"]
 
 
-def prepare_profiles(img_profile, p_nodata: float, scale: float, offset: float):
+def prepare_profiles(img_profile, p_nodata: float, scale: float, offset: float, vpp_dtype: str = "float32"):
     img_profile_st = copy.deepcopy(img_profile)
     img_profile_st.update(compress="lzw", count=1)
     if scale != 1 or offset != 0:
         img_profile_st.update(dtype=rasterio.float32)
 
     img_profile_vpp = copy.deepcopy(img_profile)
-    img_profile_vpp.update(nodata=p_nodata, dtype=rasterio.float32, compress="lzw", count=1)
+    img_profile_vpp.update(nodata=p_nodata, dtype=vpp_dtype, compress="lzw", count=1)
 
     img_profile_qa = copy.deepcopy(img_profile)
     img_profile_qa.update(nodata=0, dtype=rasterio.uint8, compress="lzw", count=1)

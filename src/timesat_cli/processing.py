@@ -125,7 +125,13 @@ def run(jsfile: str) -> None:
         selected_vpp_output_names,
     )
 
-    img_profile_st, img_profile_vpp, img_profile_qa, img_profile_ns = prepare_profiles(img_profile, s.p_nodata, s.scale, s.offset)
+    img_profile_st, img_profile_vpp, img_profile_qa, img_profile_ns = prepare_profiles(
+        img_profile,
+        s.p_nodata,
+        s.scale,
+        s.offset,
+        s.vpp_dtype,
+    )
     # Create output datasets upfront, then close immediately.
     if s.outputvariables == 1:
         for path in outvppfn:

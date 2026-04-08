@@ -27,6 +27,7 @@ def _grouped_config() -> dict:
             "p_st_timestep": 1,
             "p_nodata": -9999,
             "p_hrvppformat": 1,
+            "vpp_dtype": "float32",
             "yfit_prefix": "TIMESAT",
             "vpp_prefix": "TIMESAT",
             "vpp_variables": [{"source": "SOSD"}, {"source": "TPROD", "name": "TI_PPI"}],
@@ -83,6 +84,30 @@ class ConfigSchemaTests(unittest.TestCase):
         self.assertEqual(cfg.settings.yfit_prefix, "YFIT")
         self.assertEqual(cfg.settings.vpp_prefix, "VPP")
 
+    def test_vpp_dtype_defaults_to_float32(self):
+        cfg_data = _grouped_config()
+        del cfg_data["output"]["vpp_dtype"]
+
+        cfg = load_config_data(cfg_data)
+
+        self.assertEqual(cfg.settings.vpp_dtype, "float32")
+
+    def test_vpp_dtype_is_configurable(self):
+        cfg_data = _grouped_config()
+        cfg_data["output"]["vpp_dtype"] = "uint16"
+
+        cfg = load_config_data(cfg_data)
+
+        self.assertEqual(cfg.settings.vpp_dtype, "uint16")
+
+    def test_invalid_vpp_dtype_is_rejected(self):
+        cfg_data = _grouped_config()
+        cfg_data["output"]["vpp_dtype"] = "badtype"
+
+        with self.assertRaises(ConfigError) as ctx:
+            load_config_data(cfg_data)
+        self.assertIn("output.vpp_dtype", str(ctx.exception))
+
     def test_legacy_schema_is_rejected_with_migration_hint(self):
         legacy = {
             "settings": {"p_nclasses": {"value": 1}},
@@ -123,6 +148,7 @@ class ConfigSchemaTests(unittest.TestCase):
         self.assertEqual(len(grouped["general"]["classes"]), 1)
         self.assertEqual(grouped["general"]["classes"][0]["landuse"], 7)
         self.assertEqual(grouped["output"]["vpp_variables"][-1]["name"], "TI_PPI")
+        self.assertEqual(grouped["output"]["vpp_dtype"], "float32")
         self.assertEqual(grouped["output"]["yfit_prefix"], "TIMESAT")
         self.assertEqual(grouped["output"]["vpp_prefix"], "TIMESAT")
 
