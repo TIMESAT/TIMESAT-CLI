@@ -57,7 +57,7 @@
     "max_memory_gb": 20,
     "scale": 1,
     "offset": 0,
-    "p_nclasses": 10,
+    "p_nclasses": 12,
     "classes": [
       {
         "landuse": 7,
