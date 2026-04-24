@@ -40,7 +40,7 @@ def convert_vpp_day_to_date(value: Optional[float]) -> Optional[datetime]:
     if value is None:
         return None
     try:
-        year = int(value // 1000) + 2000
+        year = int(value // 1000)
         day_of_year = value % 1000
         return datetime(year, 1, 1) + timedelta(days=day_of_year - 1)
     except Exception:
