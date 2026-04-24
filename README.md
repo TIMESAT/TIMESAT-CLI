@@ -17,7 +17,7 @@ Before you begin, make sure you have:
 
 ## Installation
 
-`timesat-cli` is available on **PyPI** and can be installed using **pip** or **uv**.  
+`timesat-cli` is available on **PyPI** and can be installed using **pip**.  
 Although it is not published on Conda, you can safely install it *inside* a Conda environment.
 
 ### Option 1 — Install inside a Conda environment
@@ -33,32 +33,7 @@ pip install timesat-cli
 
 ---
 
-### Option 2 — Install via uv (recommended for pure Python environments)
-
-[`uv`](https://github.com/astral-sh/uv) is a modern, high-performance alternative to pip and venv.
-
-1. Install `uv`:
-
-   ```bash
-   pip install uv
-   # or
-   curl -LsSf https://astral.sh/uv/install.sh | sh
-   ```
-
-2. Create a virtual environment and install the package:
-
-   ```bash
-   uv venv .venv
-   source .venv/bin/activate
-   uv pip install timesat-cli
-   ```
-
-> `uv` provides faster dependency resolution and caching.  
-> It will automatically install `timesat` and related dependencies.
-
----
-
-### Option 3 — Direct installation with pip
+### Option 2 — Direct installation with pip
 
 If you already have Python 3.10+ installed:
 
