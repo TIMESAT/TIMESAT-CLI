@@ -39,14 +39,14 @@ def run(jsfile: str) -> None:
             outyfitfn.append(os.path.join(st_folder, f"{yfit_prefix}_{yfitdate.strftime('%Y%m%d')}.tif"))
             outyfitqafn.append(os.path.join(st_folder, f"{yfit_prefix}_{yfitdate.strftime('%Y%m%d')}_QA.tif"))
 
-        outvppfn, outvppqafn, outnsfn = build_vpp_output_filenames(
+        outvppfn, outvppqafn = build_vpp_output_filenames(
             vpp_folder=vpp_folder,
             yrstart=yrstart,
             yrend=yrend,
             variable_names=vpp_output_names,
             prefix=vpp_prefix,
         )
-        return outyfitfn, outyfitqafn, outvppfn, outvppqafn, outnsfn
+        return outyfitfn, outyfitqafn, outvppfn, outvppqafn
 
 
     print(jsfile)
@@ -124,7 +124,7 @@ def run(jsfile: str) -> None:
             src_names=TIMESAT_VPP_NAMES,
         )
 
-    outyfitfn, outyfitqafn, outvppfn, outvppqafn, outnsfn = _build_output_filenames(
+    outyfitfn, outyfitqafn, outvppfn, outvppqafn = _build_output_filenames(
         st_folder,
         vpp_folder,
         p_outindex,
@@ -136,7 +136,7 @@ def run(jsfile: str) -> None:
         selected_vpp_output_names,
     )
 
-    img_profile_st, img_profile_vpp, img_profile_qa, img_profile_ns = prepare_profiles(
+    img_profile_st, img_profile_vpp, img_profile_qa = prepare_profiles(
         img_profile,
         s.p_nodata,
         s.scale,
@@ -150,9 +150,6 @@ def run(jsfile: str) -> None:
                 pass
         for path in outvppqafn:
             with rasterio.open(path, "w", **img_profile_qa):
-                pass
-        for path in outnsfn:
-            with rasterio.open(path, "w", **img_profile_ns):
                 pass
 
     for path in outyfitfn:
@@ -202,7 +199,7 @@ def run(jsfile: str) -> None:
         if s.scale != 1 or s.offset != 0:
             vi = vi * s.scale + s.offset
 
-        vpp, vppqa, nseason, yfit, yfitqa, seasonfit, tseq = timesat.tsfprocess(
+        vpp, vppqa, _nseason, yfit, yfitqa, seasonfit, tseq = timesat.tsfprocess(
             yr, vi, qa, timevector, lc, s.p_nclasses, landuse_arr, p_outindex,
             s.p_ignoreday, s.p_ylu, s.p_printflag, p_fitmethod_arr, p_smooth_arr,
             s.p_nodata, s.p_davailwin, s.p_outlier,
@@ -233,9 +230,6 @@ def run(jsfile: str) -> None:
 
             vppqa  = np.moveaxis(vppqa, -1, 0)
             write_layers_paths(outvppqafn, vppqa, window)
-
-            nseason  = np.moveaxis(nseason, -1, 0)
-            write_layers_paths(outnsfn, nseason, window)
 
         # Move to (t, y, x)
         yfit = np.moveaxis(yfit, -1, 0)

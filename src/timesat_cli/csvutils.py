@@ -3,7 +3,7 @@ CSV / table utilities for TIMESAT processing.
 
 - ``read_timeseries_csv``: single-site CSV with fixed columns (time, vi, qa).
 - ``read_table_data``:     multi-series DataFrame (first col = dates, rest = data).
-- ``write_timesat_csv_outputs``: write yfit / vpp / nseason CSVs.
+- ``write_timesat_csv_outputs``: write yfit / vpp CSVs.
 """
 
 from __future__ import annotations
@@ -84,13 +84,12 @@ def write_timesat_csv_outputs(
     timevector_out: np.ndarray,   # p_outindex dates in YYYYDOY
     yfit: np.ndarray,             # shape (T_out,) for single site
     vpp: Optional[np.ndarray],    # shape (13*2*yr,) flattened for single site
-    nseason: Optional[int]
+    _nseason: Optional[int] = None,
 ) -> None:
     """
-    Writes three CSVs:
+    Writes CSV outputs:
       - yfit.csv: columns [time(YYYYDOY), yfit]
       - vpp.csv : 13*2*yr parameters as columns VPP_1 ... VPP_N (optional if vpp is None)
-      - nseason.csv: single row with nseason (optional if nseason is None)
     """
     import os
     os.makedirs(out_folder, exist_ok=True)
@@ -108,12 +107,6 @@ def write_timesat_csv_outputs(
         cols = [f"VPP_{i+1}" for i in range(vpp.size)]
         vpp_df = pd.DataFrame([vpp], columns=cols)
         vpp_df.to_csv(os.path.join(out_folder, "vpp.csv"), index=False)
-
-    # nseason
-    if nseason is not None:
-        pd.DataFrame({"nseason": [int(nseason)]}).to_csv(
-            os.path.join(out_folder, "nseason.csv"), index=False
-        )
 
 
 # ---------------------------------------------------------------------------

@@ -97,7 +97,6 @@ The file 'timesat_run.py' contains the full example pipeline that invokes core m
 - yfit: `<yfit_prefix>_<YYYYMMDD>.tif` and `<yfit_prefix>_<YYYYMMDD>_QA.tif`
 - VPP: `<vpp_prefix>_<Output Name>_<year>_season_<n>.tif`
 - VPP QA: `<vpp_prefix>_QA_<year>_season_<n>.tif`
-- season count: `<vpp_prefix>_<year>_numseason.tif`
 
 `vpp_dtype` controls the raster data type used for VPP outputs. It is optional and defaults to `float32`.
 Supported values: `uint8`, `uint16`, `int16`, `uint32`, `int32`, `float32`, `float64`.

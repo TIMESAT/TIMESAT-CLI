@@ -73,10 +73,9 @@ def build_vpp_output_filenames(
     variable_names: Sequence[str],
     prefix: str = "TIMESAT",
     seasons_per_year: int = 2,
-) -> tuple[list[str], list[str], list[str]]:
+) -> tuple[list[str], list[str]]:
     outvppfn: list[str] = []
     outvppqafn: list[str] = []
-    outnsfn: list[str] = []
 
     season_years = build_vpp_season_years(yrstart, yrend, seasons_per_year)
     for season_i, year in enumerate(season_years):
@@ -89,10 +88,7 @@ def build_vpp_output_filenames(
             os.path.join(vpp_folder, f"{prefix}_QA_{year}_season_{season}.tif")
         )
 
-    for year in range(yrstart, yrend + 1):
-        outnsfn.append(os.path.join(vpp_folder, f"{prefix}_{year}_numseason.tif"))
-
-    return outvppfn, outvppqafn, outnsfn
+    return outvppfn, outvppqafn
 
 
 def convert_date_vpp_layers_to_layer_doy(

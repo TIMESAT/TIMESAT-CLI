@@ -25,7 +25,6 @@ def memory_plan(
         2 * z                  # VI + QA
         + 2 * p_outindex_num   # yfit + yfit QA
         + 2 * 13 * 2 * yr      # VPP + VPP QA
-        + yr                   # nseason
     )
     
     bytes_per = 8  # float64

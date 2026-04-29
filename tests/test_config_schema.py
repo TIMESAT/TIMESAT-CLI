@@ -196,7 +196,7 @@ class ConfigSchemaTests(unittest.TestCase):
         self.assertEqual(loaded.settings.outputfolder, "out")
 
     def test_vpp_output_filenames_use_custom_prefix(self):
-        outvppfn, outvppqafn, outnsfn = build_vpp_output_filenames(
+        outvppfn, outvppqafn = build_vpp_output_filenames(
             vpp_folder="out",
             yrstart=2020,
             yrend=2020,
@@ -206,7 +206,20 @@ class ConfigSchemaTests(unittest.TestCase):
 
         self.assertEqual(outvppfn, ["out/VPP_SOSD_2020_season_1.tif", "out/VPP_SOSD_2020_season_2.tif"])
         self.assertEqual(outvppqafn, ["out/VPP_QA_2020_season_1.tif", "out/VPP_QA_2020_season_2.tif"])
-        self.assertEqual(outnsfn, ["out/VPP_2020_numseason.tif"])
+
+    def test_vpp_output_filenames_do_not_include_numseason(self):
+        output_groups = build_vpp_output_filenames(
+            vpp_folder="out",
+            yrstart=2020,
+            yrend=2022,
+            variable_names=["SOSD", "EOSD"],
+            prefix="VPP",
+        )
+
+        self.assertEqual(len(output_groups), 2)
+        self.assertTrue(
+            all("numseason" not in path for output_group in output_groups for path in output_group)
+        )
 
     def test_build_vpp_season_years_matches_filename_order(self):
         self.assertEqual(build_vpp_season_years(2020, 2021), [2020, 2020, 2021, 2021])

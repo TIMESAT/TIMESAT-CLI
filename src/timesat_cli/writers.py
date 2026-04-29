@@ -22,10 +22,7 @@ def prepare_profiles(img_profile, p_nodata: float, scale: float, offset: float, 
     img_profile_qa = copy.deepcopy(img_profile)
     img_profile_qa.update(nodata=0, dtype=rasterio.uint8, compress="lzw", count=1)
 
-    img_profile_ns = copy.deepcopy(img_profile)
-    img_profile_ns.update(nodata=255, dtype=rasterio.uint8, compress="lzw", count=1)
-
-    return img_profile_st, img_profile_vpp, img_profile_qa, img_profile_ns
+    return img_profile_st, img_profile_vpp, img_profile_qa
 
 
 def write_layers(
