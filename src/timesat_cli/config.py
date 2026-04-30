@@ -71,9 +71,12 @@ DEFAULT_CLASS = {
     "p_fillbase": 0,
     "p_seasonmethod": 1,
     "p_seapar": 1,
+    "lowrangemode": 1,
+    "highrangemode": 0,
+    "rangedownweight": 0.5,
 }
 
-REQUIRED_CLASS_KEYS = tuple(DEFAULT_CLASS.keys())
+REQUIRED_CLASS_KEYS = ("landuse",)
 
 
 @dataclass
@@ -89,6 +92,9 @@ class ClassParams:
     p_fillbase: int
     p_seasonmethod: int
     p_seapar: float
+    p_lowrangemode: int
+    p_highrangemode: int
+    p_rangedownweight: float
 
 
 @dataclass
@@ -232,6 +238,15 @@ def _as_list(value: Any, path: str) -> list[Any]:
     return value
 
 
+def _class_value(class_cfg: dict[str, Any], key: str) -> Any:
+    prefixed = f"p_{key}"
+    if key in class_cfg:
+        return class_cfg[key]
+    if prefixed in class_cfg:
+        return class_cfg[prefixed]
+    return DEFAULT_CLASS[key]
+
+
 def _parse_vpp_variables(raw: Any) -> list[VPPVariable]:
     if raw is None:
         raw = DEFAULT_OUTPUT["vpp_variables"]
@@ -282,25 +297,28 @@ def _parse_class_params(class_cfg: dict[str, Any], index: int) -> ClassParams:
         joined = ", ".join(missing)
         raise ConfigError(f"'general.classes[{index}]' missing required key(s): {joined}.")
 
-    startcutoff_raw = _as_list(class_cfg["p_startcutoff"], f"general.classes[{index}].p_startcutoff")
+    startcutoff_raw = _as_list(_class_value(class_cfg, "p_startcutoff"), f"general.classes[{index}].p_startcutoff")
     if len(startcutoff_raw) != 2:
         raise ConfigError(f"'general.classes[{index}].p_startcutoff' must have exactly 2 values.")
 
     return ClassParams(
-        landuse=_as_int(class_cfg["landuse"], f"general.classes[{index}].landuse"),
-        p_fitmethod=_as_int(class_cfg["p_fitmethod"], f"general.classes[{index}].p_fitmethod"),
-        p_smooth=_as_number(class_cfg["p_smooth"], f"general.classes[{index}].p_smooth"),
-        p_nenvi=_as_int(class_cfg["p_nenvi"], f"general.classes[{index}].p_nenvi"),
-        p_wfactnum=_as_number(class_cfg["p_wfactnum"], f"general.classes[{index}].p_wfactnum"),
-        p_startmethod=_as_int(class_cfg["p_startmethod"], f"general.classes[{index}].p_startmethod"),
+        landuse=_as_int(_class_value(class_cfg, "landuse"), f"general.classes[{index}].landuse"),
+        p_fitmethod=_as_int(_class_value(class_cfg, "p_fitmethod"), f"general.classes[{index}].p_fitmethod"),
+        p_smooth=_as_number(_class_value(class_cfg, "p_smooth"), f"general.classes[{index}].p_smooth"),
+        p_nenvi=_as_int(_class_value(class_cfg, "p_nenvi"), f"general.classes[{index}].p_nenvi"),
+        p_wfactnum=_as_number(_class_value(class_cfg, "p_wfactnum"), f"general.classes[{index}].p_wfactnum"),
+        p_startmethod=_as_int(_class_value(class_cfg, "p_startmethod"), f"general.classes[{index}].p_startmethod"),
         p_startcutoff=(
             _as_number(startcutoff_raw[0], f"general.classes[{index}].p_startcutoff[0]"),
             _as_number(startcutoff_raw[1], f"general.classes[{index}].p_startcutoff[1]"),
         ),
-        p_low_percentile=_as_number(class_cfg["p_low_percentile"], f"general.classes[{index}].p_low_percentile"),
-        p_fillbase=_as_int(class_cfg["p_fillbase"], f"general.classes[{index}].p_fillbase"),
-        p_seasonmethod=_as_int(class_cfg["p_seasonmethod"], f"general.classes[{index}].p_seasonmethod"),
-        p_seapar=_as_number(class_cfg["p_seapar"], f"general.classes[{index}].p_seapar"),
+        p_low_percentile=_as_number(_class_value(class_cfg, "p_low_percentile"), f"general.classes[{index}].p_low_percentile"),
+        p_fillbase=_as_int(_class_value(class_cfg, "p_fillbase"), f"general.classes[{index}].p_fillbase"),
+        p_seasonmethod=_as_int(_class_value(class_cfg, "p_seasonmethod"), f"general.classes[{index}].p_seasonmethod"),
+        p_seapar=_as_number(_class_value(class_cfg, "p_seapar"), f"general.classes[{index}].p_seapar"),
+        p_lowrangemode=_as_int(_class_value(class_cfg, "lowrangemode"), f"general.classes[{index}].lowrangemode"),
+        p_highrangemode=_as_int(_class_value(class_cfg, "highrangemode"), f"general.classes[{index}].highrangemode"),
+        p_rangedownweight=_as_number(_class_value(class_cfg, "rangedownweight"), f"general.classes[{index}].rangedownweight"),
     )
 
 
@@ -395,7 +413,8 @@ def _legacy_get(settings: dict[str, Any], key: str, default: Any) -> Any:
 def _migrate_class_block(class_cfg: dict[str, Any]) -> dict[str, Any]:
     out: dict[str, Any] = {}
     for key, default in DEFAULT_CLASS.items():
-        out[key] = _unwrap_legacy(class_cfg.get(key, default))
+        legacy_key = f"p_{key}"
+        out[key] = _unwrap_legacy(class_cfg.get(key, class_cfg.get(legacy_key, default)))
     return out
 
 
@@ -514,7 +533,8 @@ def build_param_array(
     dtype,
     size: int = 255,
     shape: Tuple[int, ...] | None = None,
-    fortran_2d: bool = False
+    fortran_2d: bool = False,
+    fill_value: Any = 0,
 ):
     """
     Build a parameter array for TIMESAT class settings.
@@ -532,6 +552,8 @@ def build_param_array(
         Extra trailing shape for per-class vectors (e.g., (2,) for p_startcutoff).
     fortran_2d : bool
         If True and `shape==(2,)`, allocate (size,2) with order='F' to mirror legacy layout.
+    fill_value : Any
+        Default value used to initialize entries not covered by configured classes.
 
     Returns
     -------
@@ -539,14 +561,14 @@ def build_param_array(
         Filled parameter array.
     """
     if shape is None:
-        arr = np.zeros(size, dtype=dtype)
+        arr = np.full(size, fill_value, dtype=dtype)
         for i, c in enumerate(s.classes):
             arr[i] = getattr(c, attr)
         return arr
 
     full_shape = (size, *shape)
     order = 'F' if fortran_2d and len(shape) == 1 and shape[0] > 1 else 'C'
-    arr = np.zeros(full_shape, dtype=dtype, order=order)
+    arr = np.full(full_shape, fill_value, dtype=dtype, order=order)
     for i, c in enumerate(s.classes):
         arr[i, ...] = getattr(c, attr)
     return arr

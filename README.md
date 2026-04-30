@@ -154,12 +154,19 @@ Example:
         "p_low_percentile": 0.0,
         "p_fillbase": 0,
         "p_seasonmethod": 1,
-        "p_seapar": 1
+        "p_seapar": 1,
+        "lowrangemode": 1,
+        "highrangemode": 0,
+        "rangedownweight": 0.5
       }
     ]
   }
 }
 ```
+
+Range handling modes are class-specific. `lowrangemode` and `highrangemode` use:
+`0` invalid (`w = 0`, keep `y`), `1` clip to the boundary and keep `w`, and `2` clip to the boundary and multiply `w` by `rangedownweight`.
+If omitted, vegetation-index products use `lowrangemode = 1`, `highrangemode = 0`, and `rangedownweight = 0.5`.
 
 ---
 

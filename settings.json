@@ -92,7 +92,10 @@
         "p_low_percentile": 0.0,
         "p_fillbase": 0,
         "p_seasonmethod": 1,
-        "p_seapar": 1
+        "p_seapar": 1,
+        "lowrangemode": 1,
+        "highrangemode": 0,
+        "rangedownweight": 0.5
       }
     ]
   }

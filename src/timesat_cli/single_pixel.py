@@ -85,6 +85,9 @@ def run_single_pixel(
     p_hrvppformat: int,
     p_seasonmethod: np.ndarray,
     p_seapar: np.ndarray,
+    p_lowrangemode: np.ndarray | None = None,
+    p_highrangemode: np.ndarray | None = None,
+    p_rangedownweight: np.ndarray | None = None,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, List[datetime]]:
     """
     Run TIMESAT fitting on a single pixel.
@@ -110,7 +113,8 @@ def run_single_pixel(
     p_ignoreday, p_ylu, p_a, p_printflag, p_fitmethod, p_smooth,
     p_nodata, p_davailwin, p_outlier, p_nenvi, p_wfactnum,
     p_startmethod, p_startcutoff, p_low_percentile, p_fillbase,
-    p_hrvppformat, p_seasonmethod, p_seapar :
+    p_hrvppformat, p_seasonmethod, p_seapar, p_lowrangemode,
+    p_highrangemode, p_rangedownweight :
         TIMESAT algorithm parameters.
 
     Returns
@@ -143,6 +147,18 @@ def run_single_pixel(
     lc = np.ones(raw_y.shape[:2], dtype=np.uint8)
     p_nclasses = 1
     landuse = np.ones(255, dtype="uint8")
+    if p_lowrangemode is None:
+        p_lowrangemode = np.full(255, 1, dtype=np.int32)
+    else:
+        p_lowrangemode = np.asarray(p_lowrangemode, dtype=np.int32)
+    if p_highrangemode is None:
+        p_highrangemode = np.zeros(255, dtype=np.int32)
+    else:
+        p_highrangemode = np.asarray(p_highrangemode, dtype=np.int32)
+    if p_rangedownweight is None:
+        p_rangedownweight = np.full(255, 0.5, dtype=np.float64)
+    else:
+        p_rangedownweight = np.asarray(p_rangedownweight, dtype=np.float64)
 
     vpp, vppqa, nseason, yfit, yfitqa, seasonfit, tseq = timesat.tsfprocess(
         nyear, raw_y, raw_w, tv_yyyydoy, lc,
@@ -152,6 +168,7 @@ def run_single_pixel(
         p_nenvi, p_wfactnum, p_startmethod, p_startcutoff,
         p_low_percentile, p_fillbase, p_hrvppformat,
         p_seasonmethod, p_seapar,
+        p_lowrangemode, p_highrangemode, p_rangedownweight,
         1, 1, 1, npt, p_outindex_num,
     )
 

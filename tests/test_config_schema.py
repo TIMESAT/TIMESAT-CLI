@@ -1,8 +1,11 @@
 import json
+import sys
 import tempfile
+import types
 import unittest
 
 from timesat_cli.config import (
+    build_param_array,
     ConfigError,
     LEGACY_MIGRATION_HINT,
     load_config,
@@ -81,6 +84,127 @@ class ConfigSchemaTests(unittest.TestCase):
         self.assertEqual(s.vpp_variables[1].name, "TI_PPI")
         self.assertEqual(s.yfit_prefix, "TIMESAT")
         self.assertEqual(s.vpp_prefix, "TIMESAT")
+        self.assertEqual(s.classes[0].p_lowrangemode, 1)
+        self.assertEqual(s.classes[0].p_highrangemode, 0)
+        self.assertEqual(s.classes[0].p_rangedownweight, 0.5)
+
+    def test_range_mode_arrays_use_defaults_for_old_config(self):
+        cfg = load_config_data(_grouped_config())
+        s = cfg.settings
+
+        low = build_param_array(s, "p_lowrangemode", "int32", fill_value=1)
+        high = build_param_array(s, "p_highrangemode", "int32")
+        downweight = build_param_array(s, "p_rangedownweight", "double", fill_value=0.5)
+
+        self.assertEqual(low.shape, (255,))
+        self.assertEqual(high.shape, (255,))
+        self.assertEqual(downweight.shape, (255,))
+        self.assertEqual(low.dtype, np.int32)
+        self.assertEqual(high.dtype, np.int32)
+        self.assertEqual(downweight.dtype, np.float64)
+        self.assertTrue(np.all(low == 1))
+        self.assertTrue(np.all(high == 0))
+        self.assertTrue(np.all(downweight == 0.5))
+
+    def test_range_mode_arrays_accept_explicit_class_values(self):
+        cfg_data = _grouped_config()
+        cfg_data["general"]["classes"][0]["lowrangemode"] = 2
+        cfg_data["general"]["classes"][0]["highrangemode"] = 1
+        cfg_data["general"]["classes"][0]["rangedownweight"] = 0.25
+
+        cfg = load_config_data(cfg_data)
+        s = cfg.settings
+        low = build_param_array(s, "p_lowrangemode", "int32", fill_value=1)
+        high = build_param_array(s, "p_highrangemode", "int32")
+        downweight = build_param_array(s, "p_rangedownweight", "double", fill_value=0.5)
+
+        self.assertEqual(low[0], 2)
+        self.assertEqual(high[0], 1)
+        self.assertEqual(downweight[0], 0.25)
+        self.assertTrue(np.all(low[1:] == 1))
+        self.assertTrue(np.all(high[1:] == 0))
+        self.assertTrue(np.all(downweight[1:] == 0.5))
+
+    def test_range_mode_arrays_accept_prefixed_class_values(self):
+        cfg_data = _grouped_config()
+        cfg_data["general"]["classes"][0]["p_lowrangemode"] = 2
+        cfg_data["general"]["classes"][0]["p_highrangemode"] = 1
+        cfg_data["general"]["classes"][0]["p_rangedownweight"] = 0.25
+
+        cfg = load_config_data(cfg_data)
+
+        self.assertEqual(cfg.settings.classes[0].p_lowrangemode, 2)
+        self.assertEqual(cfg.settings.classes[0].p_highrangemode, 1)
+        self.assertEqual(cfg.settings.classes[0].p_rangedownweight, 0.25)
+
+    def test_single_pixel_tsfprocess_argument_order_includes_range_modes(self):
+        from timesat_cli.single_pixel import run_single_pixel
+
+        calls = []
+
+        def fake_tsfprocess(*args):
+            calls.append(args)
+            yfit = np.zeros((1, 1, 1), dtype=np.float32)
+            return (
+                np.zeros((1, 1, 1), dtype=np.float32),
+                np.zeros((1, 1, 1), dtype=np.uint8),
+                np.zeros((1, 1), dtype=np.uint8),
+                yfit,
+                np.zeros_like(yfit, dtype=np.uint8),
+                np.zeros_like(yfit),
+                np.arange(1),
+            )
+
+        old_timesat = sys.modules.get("timesat")
+        sys.modules["timesat"] = types.SimpleNamespace(tsfprocess=fake_tsfprocess)
+        try:
+            run_single_pixel(
+                raw_y=np.array([[[0.2]]], dtype=np.float64),
+                raw_w=np.array([[[1]]], dtype=np.uint16),
+                raw_lc=np.array([[1]], dtype=np.uint8),
+                tv_yyyydoy=np.array([2020001], dtype=np.int32),
+                yrstart=2020,
+                nyear=1,
+                npt=1,
+                p_outststep=365,
+                p_ignoreday=366,
+                p_ylu=[0.0, 1.0],
+                p_a=[],
+                p_printflag=0,
+                p_fitmethod=np.ones(255, dtype=np.uint8),
+                p_smooth=np.ones(255, dtype=np.float64),
+                p_nodata=-9999,
+                p_davailwin=45,
+                p_outlier=0,
+                p_nenvi=np.ones(255, dtype=np.uint8),
+                p_wfactnum=np.ones(255, dtype=np.float64),
+                p_startmethod=np.ones(255, dtype=np.uint8),
+                p_startcutoff=np.ones((255, 2), dtype=np.float64, order="F"),
+                p_low_percentile=np.zeros(255, dtype=np.float64),
+                p_fillbase=np.zeros(255, dtype=np.uint8),
+                p_hrvppformat=1,
+                p_seasonmethod=np.ones(255, dtype=np.uint8),
+                p_seapar=np.ones(255, dtype=np.float64),
+                p_lowrangemode=np.full(255, 2, dtype=np.int32),
+                p_highrangemode=np.full(255, 1, dtype=np.int32),
+                p_rangedownweight=np.full(255, 0.25, dtype=np.float64),
+            )
+        finally:
+            if old_timesat is None:
+                del sys.modules["timesat"]
+            else:
+                sys.modules["timesat"] = old_timesat
+
+        args = calls[0]
+        self.assertTrue(np.all(args[25] == 2))
+        self.assertTrue(np.all(args[26] == 1))
+        self.assertTrue(np.all(args[27] == 0.25))
+        self.assertEqual(args[25].shape, (255,))
+        self.assertEqual(args[26].shape, (255,))
+        self.assertEqual(args[27].shape, (255,))
+        self.assertEqual(args[25].dtype, np.int32)
+        self.assertEqual(args[26].dtype, np.int32)
+        self.assertEqual(args[27].dtype, np.float64)
 
     def test_output_prefixes_are_configurable(self):
         cfg_data = _grouped_config()
@@ -159,6 +283,9 @@ class ConfigSchemaTests(unittest.TestCase):
         self.assertEqual(grouped["output"]["vpp_dtype"], "float32")
         self.assertEqual(grouped["output"]["yfit_prefix"], "TIMESAT")
         self.assertEqual(grouped["output"]["vpp_prefix"], "TIMESAT")
+        self.assertEqual(grouped["general"]["classes"][0]["lowrangemode"], 1)
+        self.assertEqual(grouped["general"]["classes"][0]["highrangemode"], 0)
+        self.assertEqual(grouped["general"]["classes"][0]["rangedownweight"], 0.5)
 
     def test_p_nclasses_must_match_classes_length(self):
         cfg = _grouped_config()
@@ -180,9 +307,17 @@ class ConfigSchemaTests(unittest.TestCase):
             load_config_data(cfg2)
         self.assertIn("non-empty", str(ctx_empty.exception))
 
-    def test_class_field_missing_reports_clear_error(self):
+    def test_optional_class_fields_use_defaults(self):
         cfg = _grouped_config()
         del cfg["general"]["classes"][0]["p_smooth"]
+
+        parsed = load_config_data(cfg)
+
+        self.assertEqual(parsed.settings.classes[0].p_smooth, 1000)
+
+    def test_landuse_is_required_for_class_mapping(self):
+        cfg = _grouped_config()
+        del cfg["general"]["classes"][0]["landuse"]
         with self.assertRaises(ConfigError) as ctx:
             load_config_data(cfg)
         self.assertIn("missing required key", str(ctx.exception))

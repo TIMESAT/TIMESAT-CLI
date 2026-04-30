@@ -69,6 +69,9 @@ def run(jsfile: str) -> None:
     p_fillbase_arr       = build_param_array(s, 'p_fillbase', 'uint8')
     p_seasonmethod_arr   = build_param_array(s, 'p_seasonmethod', 'uint8')
     p_seapar_arr         = build_param_array(s, 'p_seapar', 'double')
+    p_lowrangemode_arr   = build_param_array(s, 'p_lowrangemode', 'int32', fill_value=1)
+    p_highrangemode_arr  = build_param_array(s, 'p_highrangemode', 'int32')
+    p_rangedownweight_arr = build_param_array(s, 'p_rangedownweight', 'double', fill_value=0.5)
 
 
     timevector, flist, qlist, yr, yrstart, yrend = read_file_lists(s.tv_list, s.image_file_list, s.quality_file_list)
@@ -205,7 +208,9 @@ def run(jsfile: str) -> None:
             s.p_nodata, s.p_davailwin, s.p_outlier,
             p_nenvi_arr, p_wfactnum_arr, p_startmethod_arr, p_startcutoff_arr,
             p_low_percentile_arr, p_fillbase_arr, s.p_hrvppformat,
-            p_seasonmethod_arr, p_seapar_arr, s.outputvariables)
+            p_seasonmethod_arr, p_seapar_arr,
+            p_lowrangemode_arr, p_highrangemode_arr, p_rangedownweight_arr,
+            s.outputvariables)
 
         print('--- start writing geotif ---  starttime: ' + str(datetime.datetime.now()))
         window = (x_map, y_map, x, y)
