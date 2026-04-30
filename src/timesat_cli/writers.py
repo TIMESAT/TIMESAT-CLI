@@ -12,7 +12,7 @@ __all__ = ["prepare_profiles", "write_layers", "write_layers_paths"]
 
 def prepare_profiles(img_profile, p_nodata: float, scale: float, offset: float, vpp_dtype: str = "float32"):
     img_profile_st = copy.deepcopy(img_profile)
-    img_profile_st.update(compress="lzw", count=1)
+    img_profile_st.update(nodata=p_nodata, compress="lzw", count=1)
     if scale != 1 or offset != 0:
         img_profile_st.update(dtype=rasterio.float32)
 

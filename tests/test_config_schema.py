@@ -240,6 +240,52 @@ class ConfigSchemaTests(unittest.TestCase):
             load_config_data(cfg_data)
         self.assertIn("output.vpp_dtype", str(ctx.exception))
 
+    def test_st_profile_uses_configured_p_nodata(self):
+        rasterio_fake = types.ModuleType("rasterio")
+        rasterio_fake.float32 = np.float32
+        rasterio_fake.uint8 = np.uint8
+        windows_fake = types.ModuleType("rasterio.windows")
+        windows_fake.Window = object
+        old_rasterio = sys.modules.get("rasterio")
+        old_rasterio_windows = sys.modules.get("rasterio.windows")
+        old_writers = sys.modules.get("timesat_cli.writers")
+        sys.modules["rasterio"] = rasterio_fake
+        sys.modules["rasterio.windows"] = windows_fake
+        sys.modules.pop("timesat_cli.writers", None)
+        try:
+            from timesat_cli.writers import prepare_profiles
+        finally:
+            if old_rasterio is None:
+                del sys.modules["rasterio"]
+            else:
+                sys.modules["rasterio"] = old_rasterio
+            if old_rasterio_windows is None:
+                del sys.modules["rasterio.windows"]
+            else:
+                sys.modules["rasterio.windows"] = old_rasterio_windows
+            if old_writers is not None:
+                sys.modules["timesat_cli.writers"] = old_writers
+            else:
+                sys.modules.pop("timesat_cli.writers", None)
+
+        img_profile = {
+            "driver": "GTiff",
+            "dtype": "uint16",
+            "nodata": 0,
+            "width": 1,
+            "height": 1,
+            "count": 3,
+        }
+
+        st_profile, _vpp_profile, _qa_profile = prepare_profiles(
+            img_profile,
+            p_nodata=-9999,
+            scale=1,
+            offset=0,
+        )
+
+        self.assertEqual(st_profile["nodata"], -9999)
+
     def test_legacy_schema_is_rejected_with_migration_hint(self):
         legacy = {
             "settings": {"p_nclasses": {"value": 1}},
