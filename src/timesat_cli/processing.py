@@ -116,7 +116,16 @@ def run(jsfile: str) -> None:
         )
         print(f"Selected VPP variables: {source_to_output}")
 
-    p_outindex, p_outindex_num = generate_output_timeseries_dates(s.p_st_timestep, yr, yrstart)
+    p_outindex, p_outindex_num = generate_output_timeseries_dates(
+        s.p_st_timestep,
+        yr,
+        yrstart,
+        time_sampling=s.time_sampling,
+        time_step_days=s.time_step_days,
+        monthly_days=s.monthly_days,
+        drop_first_year=s.drop_first_year,
+        drop_last_year=s.drop_last_year,
+    )
     date_layer_years = None
     date_layer_indices = None
     scaled_layer_indices = None

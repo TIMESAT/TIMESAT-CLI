@@ -9,7 +9,7 @@ Author: Zhanzhang Cai
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import List, Tuple
 
 import numpy as np
@@ -88,6 +88,11 @@ def run_single_pixel(
     p_lowrangemode: np.ndarray | None = None,
     p_highrangemode: np.ndarray | None = None,
     p_rangedownweight: np.ndarray | None = None,
+    time_sampling: str | None = None,
+    time_step_days: int | None = None,
+    monthly_days: List[int] | None = None,
+    drop_first_year: bool = False,
+    drop_last_year: bool = False,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, List[datetime]]:
     """
     Run TIMESAT fitting on a single pixel.
@@ -135,10 +140,19 @@ def run_single_pixel(
         Daily time steps for the fitted series.
     """
     import timesat
+    from .dateutils import date_with_ignored_day, generate_output_timeseries_dates
     from .qa import assign_qa_weight
 
-    p_outindex = np.arange(1, nyear * 365 + 1)[::p_outststep]
-    p_outindex_num = len(p_outindex)
+    p_outindex, p_outindex_num = generate_output_timeseries_dates(
+        p_outststep,
+        nyear,
+        yrstart,
+        time_sampling=time_sampling,
+        time_step_days=time_step_days,
+        monthly_days=monthly_days,
+        drop_first_year=drop_first_year,
+        drop_last_year=drop_last_year,
+    )
 
     # Replace NaN values with below-range value
     raw_y = np.nan_to_num(raw_y, nan=p_ylu[0] - 1)
@@ -172,10 +186,9 @@ def run_single_pixel(
         1, 1, 1, npt, p_outindex_num,
     )
 
-    daily_timestep = []
-    for year in range(yrstart, yrstart + nyear):
-        for day in range(365):
-            daily_timestep.append(datetime(year, 1, 1) + timedelta(days=day))
-    daily_timestep = daily_timestep[::p_outststep]
+    daily_timestep = [
+        datetime.combine(date_with_ignored_day(yrstart, int(i), p_ignoreday), datetime.min.time())
+        for i in p_outindex
+    ]
 
     return vpp, vppqa, nseason, yfit, yfitqa, seasonfit, daily_timestep

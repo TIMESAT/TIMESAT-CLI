@@ -47,10 +47,10 @@ def date_with_ignored_day(yrstart: int, i_tv: int, p_ignoreday: int) -> datetime
     return jan1 + datetime.timedelta(days=real_ordinal - 1)
 
 
-def build_monthly_sample_indices(yrstart: int, yr: int) -> np.ndarray:
+def build_monthly_sample_indices(yrstart: int, yr: int, monthly_days: list[int] | tuple[int, ...]) -> np.ndarray:
     """
-    Build a synthetic time index (1-based) for sampling the 1st, 11th, and 21st
-    of each month across multiple years.
+    Build a synthetic time index (1-based) for sampling selected month days
+    across multiple years.
 
     The synthetic timeline always uses 365 days per year.
     In leap years we:
@@ -85,7 +85,7 @@ def build_monthly_sample_indices(yrstart: int, yr: int) -> np.ndarray:
         cum = 0  # cumulative day count within the current year
 
         for dim in days_in_month:
-            for d in (1, 11, 21):
+            for d in monthly_days:
                 if d <= dim:
                     indices.append(year_offset + cum + d)
             cum += dim
@@ -95,23 +95,49 @@ def build_monthly_sample_indices(yrstart: int, yr: int) -> np.ndarray:
     return np.array(indices, dtype=int)
 
 
-def generate_output_timeseries_dates(p_st_timestep, yr, yrstart):
+def generate_output_timeseries_dates(
+    p_st_timestep,
+    yr,
+    yrstart,
+    *,
+    time_sampling: str | None = None,
+    time_step_days: int | None = None,
+    monthly_days: list[int] | tuple[int, ...] | None = None,
+    drop_first_year: bool = False,
+    drop_last_year: bool = False,
+):
     p_st_timestep = int(p_st_timestep)
 
-    if p_st_timestep > 0:
-        p_outindex = np.arange(1, yr * 365 + 1)[::p_st_timestep]
-    elif p_st_timestep < 0:
-        p_outindex = build_monthly_sample_indices(yrstart, yr)
-    else:  # p_st_timestep == 0
-        p_outindex = np.arange(1, yr * 365 + 1)[::9999]
+    if time_sampling is None:
+        if p_st_timestep < 0:
+            time_sampling = "monthly"
+            monthly_days = (1, 11, 21) if monthly_days is None else monthly_days
+            if p_st_timestep == -1:
+                drop_first_year = True
+                drop_last_year = True
+        else:
+            time_sampling = "regular"
+            time_step_days = p_st_timestep if time_step_days is None else time_step_days
 
-    # HRVPP2 timestep: delete first year and last year from p_outindex
-    if p_st_timestep == -1:
+    if time_sampling == "regular":
+        step = p_st_timestep if time_step_days is None else int(time_step_days)
+        if step > 0:
+            p_outindex = np.arange(1, yr * 365 + 1)[::step]
+        else:
+            p_outindex = np.arange(1, yr * 365 + 1)[::9999]
+    elif time_sampling == "monthly":
+        days = (1, 11, 21) if monthly_days is None else tuple(monthly_days)
+        p_outindex = build_monthly_sample_indices(yrstart, yr, days)
+    else:
+        raise ValueError("time_sampling must be either 'regular' or 'monthly'.")
+
+    if drop_first_year:
         first_year_end = 365
-        last_year_start = (yr - 1) * 365 + 1
+        p_outindex = p_outindex[p_outindex > first_year_end]
 
-        # keep only indices that are NOT in year 1 and NOT in last year
-        p_outindex = p_outindex[(p_outindex > first_year_end) & (p_outindex < last_year_start)]
+    if drop_last_year:
+        last_year_start = (yr - 1) * 365 + 1
+        p_outindex = p_outindex[p_outindex < last_year_start]
 
     p_outindex_num = len(p_outindex)
     

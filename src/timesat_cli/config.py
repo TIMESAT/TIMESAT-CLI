@@ -36,7 +36,12 @@ DEFAULT_INPUT = {
 DEFAULT_OUTPUT = {
     "outputfolder": "",
     "outputvariables": 1,
-    "p_st_timestep": -1,
+    "p_st_timestep": 1,
+    "time_sampling": "regular",
+    "time_step_days": 1,
+    "monthly_days": [1, 11, 21],
+    "drop_first_year": False,
+    "drop_last_year": False,
     "p_nodata": -9999,
     "p_hrvppformat": 1,
     "vpp_dtype": "float32",
@@ -118,6 +123,11 @@ class Settings:
     p_ylu: np.ndarray
     p_a: List[List[float]]
     p_st_timestep: int
+    time_sampling: str
+    time_step_days: int
+    monthly_days: List[int]
+    drop_first_year: bool
+    drop_last_year: bool
     p_nodata: float
     p_davailwin: int
     p_outlier: int
@@ -236,6 +246,88 @@ def _as_list(value: Any, path: str) -> list[Any]:
     if not isinstance(value, list):
         raise ConfigError(f"'{path}' must be a list.")
     return value
+
+
+def _as_bool(value: Any, path: str) -> bool:
+    if not isinstance(value, bool):
+        raise ConfigError(f"'{path}' must be boolean.")
+    return value
+
+
+def _parse_monthly_days(value: Any, path: str) -> list[int]:
+    days_raw = _as_list(value, path)
+    if len(days_raw) == 0:
+        raise ConfigError(f"'{path}' must contain at least one day.")
+
+    days = [_as_int(day, f"{path}[{i}]") for i, day in enumerate(days_raw)]
+    invalid = [day for day in days if day < 1 or day > 31]
+    if invalid:
+        joined = ", ".join(str(day) for day in invalid)
+        raise ConfigError(f"'{path}' days must be in [1, 31]. Invalid: {joined}.")
+
+    if len(set(days)) != len(days):
+        raise ConfigError(f"'{path}' must not contain duplicate days.")
+
+    return sorted(days)
+
+
+def _parse_output_time_settings(output_cfg: dict[str, Any]) -> tuple[int, str, int, list[int], bool, bool]:
+    new_keys = {
+        "time_sampling",
+        "time_step_days",
+        "monthly_days",
+        "drop_first_year",
+        "drop_last_year",
+    }
+    has_new_time_settings = any(key in output_cfg for key in new_keys)
+
+    if has_new_time_settings:
+        time_sampling = _as_string(
+            _get_optional(output_cfg, "time_sampling", DEFAULT_OUTPUT["time_sampling"]),
+            "output.time_sampling",
+        ).strip().lower()
+        if time_sampling not in {"regular", "monthly"}:
+            raise ConfigError("'output.time_sampling' must be either 'regular' or 'monthly'.")
+
+        time_step_days = _as_int(
+            _get_optional(output_cfg, "time_step_days", DEFAULT_OUTPUT["time_step_days"]),
+            "output.time_step_days",
+        )
+        if time_step_days < 0:
+            raise ConfigError("'output.time_step_days' must be >= 0.")
+
+        monthly_days = _parse_monthly_days(
+            _get_optional(output_cfg, "monthly_days", DEFAULT_OUTPUT["monthly_days"]),
+            "output.monthly_days",
+        )
+        drop_first_year = _as_bool(
+            _get_optional(output_cfg, "drop_first_year", DEFAULT_OUTPUT["drop_first_year"]),
+            "output.drop_first_year",
+        )
+        drop_last_year = _as_bool(
+            _get_optional(output_cfg, "drop_last_year", DEFAULT_OUTPUT["drop_last_year"]),
+            "output.drop_last_year",
+        )
+
+        p_st_timestep_raw = output_cfg.get("p_st_timestep")
+        if p_st_timestep_raw is not None:
+            p_st_timestep = _as_int(p_st_timestep_raw, "output.p_st_timestep")
+        elif time_sampling == "regular":
+            p_st_timestep = time_step_days
+        else:
+            p_st_timestep = -1
+
+        return p_st_timestep, time_sampling, time_step_days, monthly_days, drop_first_year, drop_last_year
+
+    p_st_timestep = _as_int(
+        _get_optional(output_cfg, "p_st_timestep", DEFAULT_OUTPUT["p_st_timestep"]),
+        "output.p_st_timestep",
+    )
+
+    if p_st_timestep < 0:
+        return p_st_timestep, "monthly", 1, list(DEFAULT_OUTPUT["monthly_days"]), p_st_timestep == -1, p_st_timestep == -1
+
+    return p_st_timestep, "regular", p_st_timestep, list(DEFAULT_OUTPUT["monthly_days"]), False, False
 
 
 def _class_value(class_cfg: dict[str, Any], key: str) -> Any:
@@ -364,6 +456,14 @@ def load_config_data(data: dict[str, Any]) -> Config:
     p_ylu = [_as_number(p_ylu[0], "general.p_ylu[0]"), _as_number(p_ylu[1], "general.p_ylu[1]")]
 
     p_a = _as_list(_get_optional(general_cfg, "p_a", DEFAULT_GENERAL["p_a"]), "general.p_a")
+    (
+        p_st_timestep,
+        time_sampling,
+        time_step_days,
+        monthly_days,
+        drop_first_year,
+        drop_last_year,
+    ) = _parse_output_time_settings(output_cfg)
 
     settings = Settings(
         s3env=_as_string(_get_optional(input_cfg, "s3env", DEFAULT_INPUT["s3env"]), "input.s3env"),
@@ -377,7 +477,12 @@ def load_config_data(data: dict[str, Any]) -> Config:
         p_ignoreday=_as_int(_get_optional(general_cfg, "p_ignoreday", DEFAULT_GENERAL["p_ignoreday"]), "general.p_ignoreday"),
         p_ylu=_as_array(p_ylu, dtype="double", fortran=True),
         p_a=p_a,
-        p_st_timestep=_as_int(_get_optional(output_cfg, "p_st_timestep", DEFAULT_OUTPUT["p_st_timestep"]), "output.p_st_timestep"),
+        p_st_timestep=p_st_timestep,
+        time_sampling=time_sampling,
+        time_step_days=time_step_days,
+        monthly_days=monthly_days,
+        drop_first_year=drop_first_year,
+        drop_last_year=drop_last_year,
         p_nodata=_as_number(_get_optional(output_cfg, "p_nodata", DEFAULT_OUTPUT["p_nodata"]), "output.p_nodata"),
         p_davailwin=_as_int(_get_optional(general_cfg, "p_davailwin", DEFAULT_GENERAL["p_davailwin"]), "general.p_davailwin"),
         p_outlier=_as_int(_get_optional(general_cfg, "p_outlier", DEFAULT_GENERAL["p_outlier"]), "general.p_outlier"),
@@ -451,6 +556,18 @@ def migrate_legacy_config_data(data: dict[str, Any]) -> dict[str, Any]:
     if nclasses <= 0:
         nclasses = 1
 
+    legacy_p_st_timestep = int(_legacy_get(legacy_settings, "p_st_timestep", DEFAULT_OUTPUT["p_st_timestep"]))
+    if legacy_p_st_timestep < 0:
+        time_sampling = "monthly"
+        time_step_days = 1
+        drop_first_year = legacy_p_st_timestep == -1
+        drop_last_year = legacy_p_st_timestep == -1
+    else:
+        time_sampling = "regular"
+        time_step_days = legacy_p_st_timestep
+        drop_first_year = False
+        drop_last_year = False
+
     class_map = {idx: cfg for idx, cfg in class_items}
     migrated_classes: list[dict[str, Any]] = []
     for i in range(1, nclasses + 1):
@@ -468,7 +585,12 @@ def migrate_legacy_config_data(data: dict[str, Any]) -> dict[str, Any]:
         "output": {
             "outputfolder": _legacy_get(legacy_settings, "outputfolder", DEFAULT_OUTPUT["outputfolder"]),
             "outputvariables": _legacy_get(legacy_settings, "outputvariables", DEFAULT_OUTPUT["outputvariables"]),
-            "p_st_timestep": _legacy_get(legacy_settings, "p_st_timestep", DEFAULT_OUTPUT["p_st_timestep"]),
+            "p_st_timestep": legacy_p_st_timestep,
+            "time_sampling": time_sampling,
+            "time_step_days": time_step_days,
+            "monthly_days": DEFAULT_OUTPUT["monthly_days"],
+            "drop_first_year": drop_first_year,
+            "drop_last_year": drop_last_year,
             "p_nodata": _legacy_get(legacy_settings, "p_nodata", DEFAULT_OUTPUT["p_nodata"]),
             "p_hrvppformat": _legacy_get(legacy_settings, "p_hrvppformat", DEFAULT_OUTPUT["p_hrvppformat"]),
             "vpp_dtype": DEFAULT_OUTPUT["vpp_dtype"],
