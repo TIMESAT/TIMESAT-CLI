@@ -1,0 +1,42 @@
+{
+  "config": "HRVPP2_config/VPP/settings_hrvpp2_VPP_v7.json",
+  "row": 25,
+  "col": 25,
+  "target_year": 2023,
+  "target_cutoff": "2023-02-28",
+  "future_cutoff": "2024-12-31",
+  "monthly_days": [
+    1,
+    11,
+    21
+  ],
+  "scenarios": {
+    "reference_full_target_no_future": {
+      "raw_start": "2020-01-02",
+      "raw_end": "2023-12-30",
+      "raw_count": 868,
+      "output_start": "2020-01-01",
+      "output_end": "2023-12-21",
+      "output_count": 144,
+      "used_range_mode_args": true
+    },
+    "prediction_no_future_new_settings": {
+      "raw_start": "2020-01-02",
+      "raw_end": "2023-02-28",
+      "raw_count": 687,
+      "output_start": "2020-01-01",
+      "output_end": "2023-12-21",
+      "output_count": 144,
+      "used_range_mode_args": true
+    },
+    "legacy_minus1_with_future_buffer": {
+      "raw_start": "2020-01-02",
+      "raw_end": "2024-12-31",
+      "raw_count": 1086,
+      "output_start": "2021-01-01",
+      "output_end": "2023-12-21",
+      "output_count": 108,
+      "used_range_mode_args": true
+    }
+  }
+}
