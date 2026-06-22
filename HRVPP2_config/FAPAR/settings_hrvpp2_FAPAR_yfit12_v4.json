@@ -9,12 +9,10 @@
   "output": {
     "outputfolder": "C:\\Users\\Zhanzhang.Cai\\Documents\\work\\Test2",
     "outputvariables": 0,
-    "p_st_timestep": -1,
     "time_sampling": "monthly",
-    "time_step_days": 1,
     "monthly_days": [1, 11, 21],
-    "drop_first_year": true,
-    "drop_last_year": true,
+    "drop_first_year": false,
+    "drop_last_year": false,
     "p_nodata": -9999
   },
   "general": {
