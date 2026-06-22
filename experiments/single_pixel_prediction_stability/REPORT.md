@@ -4,7 +4,7 @@
 
 This note documents a single-pixel experiment designed to clarify the difference between the legacy HR-VPP output setting used in VITO's test and a prediction-oriented monthly output setting.
 
-The central question is whether a target year with incomplete observations should be handled by adding a future buffer year, or by keeping the target year as the last output year and disabling last-year trimming.
+The central question is how to correctly test the extrapolation capability of TIMESAT when the target year has incomplete observations. In particular, the test should distinguish between a true prediction-style setup, where no future observations are used, and a retrospective fitting setup, where future-year buffer data may influence the fitted target-year curve.
 
 ## Terminology
 
