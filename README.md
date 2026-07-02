@@ -82,6 +82,8 @@ The file 'timesat_run.py' contains the full example pipeline that invokes core m
 
 `timesat-cli` only supports grouped JSON:
 
+For a complete parameter reference, see [docs/parameters.md](docs/parameters.md).
+
 - `input`: `s3env`, `tv_list`, `image_file_list`, `quality_file_list`, `lc_file`
 - `output`: `outputfolder`, `outputvariables`, `time_sampling`, `time_step_days`, `monthly_days`, `drop_first_year`, `drop_last_year`, `p_nodata`, `p_hrvppformat`, `vpp_dtype`, `yfit_prefix`, `vpp_prefix`, `vpp_variables`
 - `general`: `imwindow`, `p_band_id`, `p_ignoreday`, `p_ylu`, `p_a`, `p_davailwin`, `p_outlier`, `p_printflag`, `max_memory_gb`, `scale`, `offset`, `classes` (and optional `p_nclasses`)
