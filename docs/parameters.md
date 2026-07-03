@@ -20,7 +20,7 @@ timesat-cli path/to/settings.json
 |---|---:|---:|---|
 | `settings_json` | path or `-` | required | Path to a grouped JSON configuration file. Use `-` to read JSON from standard input. |
 | `-t`, `--threads` | int | unset | Number of OpenMP threads used by TIMESAT. Use `0` for all CPUs. Must be greater than or equal to 0. |
-| `--run-dir` | path | unset | Optional run directory, mainly intended for GUI integrations. When `settings_json` is `-`, this directory is used to store the temporary `settings.json`. |
+| `--run-dir` | path | unset | Optional working directory for GUI or automation integrations. It is mainly useful when `settings_json` is `-`: the JSON read from standard input is saved as `<run-dir>/settings.json` before processing. This does not control the TIMESAT output directory; outputs are still written to `output.outputfolder`. |
 
 ### Migrate a legacy configuration
 
