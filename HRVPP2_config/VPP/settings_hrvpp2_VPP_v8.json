@@ -26,7 +26,6 @@
   "output": {
     "outputfolder": "tests/T32TNS_v11",
     "outputvariables": 1,
-    "p_st_timestep": -1,
     "time_sampling": "monthly",
     "time_step_days": 1,
     "monthly_days": [1, 11, 21],
