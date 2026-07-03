@@ -37,7 +37,6 @@ timesat-cli migrate-config old_settings.json new_settings.json
 
 ```json
 {
-  "metadata": {},
   "input": {},
   "output": {},
   "general": {
@@ -46,7 +45,7 @@ timesat-cli migrate-config old_settings.json new_settings.json
 }
 ```
 
-`metadata` is not used by the processing code. It can be used to record dataset notes, parameter provenance, version information, or other descriptive metadata. `input`, `output`, and `general` are required.
+`input`, `output`, and `general` are required. `metadata` is optional and is not used by the processing code. It can be used to record dataset notes, parameter provenance, version information, or other descriptive metadata.
 
 ## input
 
