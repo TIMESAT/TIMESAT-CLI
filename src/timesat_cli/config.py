@@ -76,7 +76,7 @@ DEFAULT_CLASS = {
     "p_fillbase": 0,
     "p_seasonmethod": 1,
     "p_seapar": 1,
-    "lowrangemode": 1,
+    "lowrangemode": 0,
     "highrangemode": 0,
     "rangedownweight": 0.5,
 }

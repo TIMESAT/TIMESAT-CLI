@@ -69,7 +69,7 @@ def run(jsfile: str) -> None:
     p_fillbase_arr       = build_param_array(s, 'p_fillbase', 'uint8')
     p_seasonmethod_arr   = build_param_array(s, 'p_seasonmethod', 'uint8')
     p_seapar_arr         = build_param_array(s, 'p_seapar', 'double')
-    p_lowrangemode_arr   = build_param_array(s, 'p_lowrangemode', 'int32', fill_value=1)
+    p_lowrangemode_arr   = build_param_array(s, 'p_lowrangemode', 'int32')
     p_highrangemode_arr  = build_param_array(s, 'p_highrangemode', 'int32')
     p_rangedownweight_arr = build_param_array(s, 'p_rangedownweight', 'double', fill_value=0.5)
 

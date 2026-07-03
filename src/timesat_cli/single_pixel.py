@@ -162,7 +162,7 @@ def run_single_pixel(
     p_nclasses = 1
     landuse = np.ones(255, dtype="uint8")
     if p_lowrangemode is None:
-        p_lowrangemode = np.full(255, 1, dtype=np.int32)
+        p_lowrangemode = np.zeros(255, dtype=np.int32)
     else:
         p_lowrangemode = np.asarray(p_lowrangemode, dtype=np.int32)
     if p_highrangemode is None:

@@ -192,7 +192,7 @@ Each object in `classes` defines TIMESAT parameters for one land-cover class. `l
 | `p_fillbase` | int | `0` | Baseline filling switch or mode. |
 | `p_seasonmethod` | int | `1` | Season separation method. |
 | `p_seapar` | number | `1` | Season separation parameter. |
-| `lowrangemode` | int | `1` | Handling mode for values below `p_ylu[0]`. |
+| `lowrangemode` | int | `0` | Handling mode for values below `p_ylu[0]`. |
 | `highrangemode` | int | `0` | Handling mode for values above `p_ylu[1]`. |
 | `rangedownweight` | number | `0.5` | Weight multiplier used when a range mode applies downweighting. |
 

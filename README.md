@@ -191,7 +191,7 @@ Example:
 
 Range handling modes are class-specific. `lowrangemode` and `highrangemode` use:
 `0` invalid (`w = 0`, keep `y`), `1` clip to the boundary and keep `w`, and `2` clip to the boundary and multiply `w` by `rangedownweight`.
-If omitted, vegetation-index products use `lowrangemode = 1`, `highrangemode = 0`, and `rangedownweight = 0.5`.
+If omitted, vegetation-index products use `lowrangemode = 0`, `highrangemode = 0`, and `rangedownweight = 0.5`.
 
 ---
 

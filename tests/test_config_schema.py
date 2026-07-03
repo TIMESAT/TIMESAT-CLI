@@ -84,7 +84,7 @@ class ConfigSchemaTests(unittest.TestCase):
         self.assertEqual(s.vpp_variables[1].name, "TI_PPI")
         self.assertEqual(s.yfit_prefix, "TIMESAT")
         self.assertEqual(s.vpp_prefix, "TIMESAT")
-        self.assertEqual(s.classes[0].p_lowrangemode, 1)
+        self.assertEqual(s.classes[0].p_lowrangemode, 0)
         self.assertEqual(s.classes[0].p_highrangemode, 0)
         self.assertEqual(s.classes[0].p_rangedownweight, 0.5)
 
@@ -92,7 +92,7 @@ class ConfigSchemaTests(unittest.TestCase):
         cfg = load_config_data(_grouped_config())
         s = cfg.settings
 
-        low = build_param_array(s, "p_lowrangemode", "int32", fill_value=1)
+        low = build_param_array(s, "p_lowrangemode", "int32")
         high = build_param_array(s, "p_highrangemode", "int32")
         downweight = build_param_array(s, "p_rangedownweight", "double", fill_value=0.5)
 
@@ -102,7 +102,7 @@ class ConfigSchemaTests(unittest.TestCase):
         self.assertEqual(low.dtype, np.int32)
         self.assertEqual(high.dtype, np.int32)
         self.assertEqual(downweight.dtype, np.float64)
-        self.assertTrue(np.all(low == 1))
+        self.assertTrue(np.all(low == 0))
         self.assertTrue(np.all(high == 0))
         self.assertTrue(np.all(downweight == 0.5))
 
@@ -114,14 +114,14 @@ class ConfigSchemaTests(unittest.TestCase):
 
         cfg = load_config_data(cfg_data)
         s = cfg.settings
-        low = build_param_array(s, "p_lowrangemode", "int32", fill_value=1)
+        low = build_param_array(s, "p_lowrangemode", "int32")
         high = build_param_array(s, "p_highrangemode", "int32")
         downweight = build_param_array(s, "p_rangedownweight", "double", fill_value=0.5)
 
         self.assertEqual(low[0], 2)
         self.assertEqual(high[0], 1)
         self.assertEqual(downweight[0], 0.25)
-        self.assertTrue(np.all(low[1:] == 1))
+        self.assertTrue(np.all(low[1:] == 0))
         self.assertTrue(np.all(high[1:] == 0))
         self.assertTrue(np.all(downweight[1:] == 0.5))
 
@@ -329,7 +329,7 @@ class ConfigSchemaTests(unittest.TestCase):
         self.assertEqual(grouped["output"]["vpp_dtype"], "float32")
         self.assertEqual(grouped["output"]["yfit_prefix"], "TIMESAT")
         self.assertEqual(grouped["output"]["vpp_prefix"], "TIMESAT")
-        self.assertEqual(grouped["general"]["classes"][0]["lowrangemode"], 1)
+        self.assertEqual(grouped["general"]["classes"][0]["lowrangemode"], 0)
         self.assertEqual(grouped["general"]["classes"][0]["highrangemode"], 0)
         self.assertEqual(grouped["general"]["classes"][0]["rangedownweight"], 0.5)
 

@@ -184,7 +184,7 @@ def _run_timesat_pixel(
         build_param_array(s, "p_seapar", "double"),
     )
     range_mode_args = (
-        build_param_array(s, "p_lowrangemode", "int32", fill_value=1),
+        build_param_array(s, "p_lowrangemode", "int32"),
         build_param_array(s, "p_highrangemode", "int32"),
         build_param_array(s, "p_rangedownweight", "double", fill_value=0.5),
     )
