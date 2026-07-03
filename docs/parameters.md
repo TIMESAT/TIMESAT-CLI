@@ -69,8 +69,8 @@ timesat-cli migrate-config old_settings.json new_settings.json
 | `outputvariables` | int | `1` | Controls VPP output. `1` writes VPP and VPP QA layers; other values are passed to TIMESAT and affect output behavior. |
 | `p_st_timestep` | int | `1` | Backward-compatible output time-step parameter. Non-negative values mean regular day intervals; negative values mean the older monthly-output behavior. Prefer the explicit `time_sampling` fields in new configurations. |
 | `time_sampling` | string | `"regular"` | yfit output time-series sampling mode. Allowed values are `regular` and `monthly`. |
-| `time_step_days` | int | `1` | Output interval in days when `time_sampling = "regular"`. `1` means daily output. |
-| `monthly_days` | int[] | `[1, 11, 21]` | Month days to output when `time_sampling = "monthly"`. Values must be between 1 and 31, must not be duplicated, and are sorted by the loader. |
+| `time_step_days` | int | `1` | Output interval in days when `time_sampling = "regular"`. `1` means daily output. Ignored when `time_sampling = "monthly"`. |
+| `monthly_days` | int[] | `[1, 11, 21]` | Month days to output when `time_sampling = "monthly"`. Ignored when `time_sampling = "regular"`. Values must be between 1 and 31, must not be duplicated, and are sorted by the loader. |
 | `drop_first_year` | bool | `false` | Whether to remove the first year from the output date range. Often used to drop a buffer year. |
 | `drop_last_year` | bool | `false` | Whether to remove the last year from the output date range. Often used to drop a buffer year. |
 | `p_nodata` | number | `-9999` | Output GeoTIFF nodata value. Also passed to TIMESAT. |
@@ -81,6 +81,11 @@ timesat-cli migrate-config old_settings.json new_settings.json
 | `vpp_variables` | list | all VPP variables | VPP variables to write. Supports string and object forms; see below. |
 
 ### Time Sampling Examples
+
+Only one sampling rule is active at a time:
+
+- `time_sampling = "regular"` uses `time_step_days` and ignores `monthly_days`.
+- `time_sampling = "monthly"` uses `monthly_days` and ignores `time_step_days`.
 
 Daily or fixed-interval output:
 
