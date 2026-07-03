@@ -1,0 +1,45 @@
+{
+  "input": {
+    "s3env": ".env",
+    "tv_list": "",
+    "image_file_list": "C:\\Users\\Zhanzhang.Cai\\Documents\\work\\FAPAR_test\\FAPAR_files_102021_022024.csv",
+    "quality_file_list": "C:\\Users\\Zhanzhang.Cai\\Documents\\work\\FAPAR_test\\LOS_31UFS_lst_202111_202402.csv",
+    "lc_file": ""
+  },
+  "output": {
+    "outputfolder": "C:\\Users\\Zhanzhang.Cai\\Documents\\work\\Test2",
+    "outputvariables": 0,
+    "time_sampling": "monthly",
+    "monthly_days": [1, 11, 21],
+    "drop_first_year": false,
+    "drop_last_year": false,
+    "p_nodata": -9999
+  },
+  "general": {
+    "imwindow": [0, 0, 50, 50],
+    "p_band_id": 1,
+    "p_ignoreday": 366,
+    "p_ylu": [0.0, 10000.0],
+    "p_a": [[0, 1], [1, 0], [2, 0], [3, 0.5], [4, 0], [5, 0]],
+    "p_davailwin": 45,
+    "p_outlier": 0,
+    "p_printflag": 0,
+    "max_memory_gb": 5,
+    "scale": 1,
+    "offset": 0,
+    "p_nclasses": 1,
+    "classes": [
+      {
+        "landuse": 1,
+        "p_fitmethod": 2,
+        "p_smooth": 100,
+        "p_nenvi": 1,
+        "p_wfactnum": 1,
+        "p_low_percentile": 0.05,
+        "p_fillbase": 1,
+        "lowrangemode": 0,
+        "highrangemode": 0
+      }
+    ]
+  }
+}
