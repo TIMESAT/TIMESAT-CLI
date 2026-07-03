@@ -103,7 +103,6 @@ Output on the 1st, 11th, and 21st of each month, dropping first and last buffer 
 ```json
 {
   "time_sampling": "monthly",
-  "time_step_days": 1,
   "monthly_days": [1, 11, 21],
   "drop_first_year": true,
   "drop_last_year": true
