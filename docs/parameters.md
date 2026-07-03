@@ -22,7 +22,7 @@ timesat-cli path/to/settings.json
 | `-t`, `--threads` | int | unset | Number of OpenMP threads used by TIMESAT. Use `0` for all CPUs. Must be greater than or equal to 0. |
 | `--run-dir` | path | unset | Optional working directory for GUI or automation integrations. It is mainly useful when `settings_json` is `-`: the JSON read from standard input is saved as `<run-dir>/settings.json` before processing. This does not control the TIMESAT output directory; outputs are still written to `output.outputfolder`. |
 
-### Migrate a legacy configuration
+### Migrate an older configuration
 
 ```bash
 timesat-cli migrate-config old_settings.json new_settings.json
@@ -30,7 +30,7 @@ timesat-cli migrate-config old_settings.json new_settings.json
 
 | Argument | Type | Description |
 |---|---:|---|
-| `old_json` | path | Legacy JSON file using the old `settings` + `class1/class2/...` schema. |
+| `old_json` | path | Older JSON file using the previous `settings` + `class1/class2/...` schema. |
 | `new_json` | path | Output path for the grouped JSON file. |
 
 ## Configuration Structure
@@ -67,7 +67,7 @@ timesat-cli migrate-config old_settings.json new_settings.json
 |---|---:|---:|---|
 | `outputfolder` | string | `""` | Output root directory. If empty, the program exits with `Nothing to do...`. |
 | `outputvariables` | int | `1` | Controls VPP output. `1` writes VPP and VPP QA layers; other values are passed to TIMESAT and affect output behavior. |
-| `p_st_timestep` | int | `1` | Backward-compatible output time-step parameter. Non-negative values mean regular day intervals; negative values mean legacy monthly output. Prefer the explicit `time_sampling` fields in new configurations. |
+| `p_st_timestep` | int | `1` | Backward-compatible output time-step parameter. Non-negative values mean regular day intervals; negative values mean the older monthly-output behavior. Prefer the explicit `time_sampling` fields in new configurations. |
 | `time_sampling` | string | `"regular"` | yfit output time-series sampling mode. Allowed values are `regular` and `monthly`. |
 | `time_step_days` | int | `1` | Output interval in days when `time_sampling = "regular"`. `1` means daily output. |
 | `monthly_days` | int[] | `[1, 11, 21]` | Month days to output when `time_sampling = "monthly"`. Values must be between 1 and 31, must not be duplicated, and are sorted by the loader. |
@@ -105,7 +105,7 @@ Output on the 1st, 11th, and 21st of each month, dropping first and last buffer 
 }
 ```
 
-Legacy `p_st_timestep = -1` is interpreted as the monthly configuration above.
+The older `p_st_timestep = -1` behavior is interpreted as the monthly configuration above.
 
 ### vpp_variables
 
