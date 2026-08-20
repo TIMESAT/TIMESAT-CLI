@@ -24,7 +24,7 @@
     "lc_file": "tests/crop_LC_2021_T32TNS_V04.tif"
   },
   "output": {
-    "outputfolder": "tests/T32TNS_v11",
+    "outputfolder": "tests/T32TNS_v12",
     "outputvariables": 1,
     "time_sampling": "monthly",
     "time_step_days": 1,
